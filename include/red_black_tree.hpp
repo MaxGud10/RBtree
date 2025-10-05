@@ -2,6 +2,9 @@
 
 #include <iostream>
 #include <memory>
+#include <fstream>   
+#include <sstream>  
+#include <cstdlib>  
 
 namespace Tree
 {
@@ -43,7 +46,7 @@ struct Node
         key_    = rhs.key_;
         color   = rhs.color;
         parent_ = rhs.parent_;
-        left_   = rhs,left_;
+        left_   = rhs.left_;
         right_  = rhs.right_;
 
         return *this;
@@ -174,6 +177,34 @@ private:
                     node->parent_ = y;
     }
 
+    mutable std::size_t nil_counter_ = 0; // уникальные имена для NULL-листьев
+
+    void emit_node_(const Node<KeyT>& node, std::ofstream& out, bool is_root) const
+    {
+        // цвета
+        const char* fill =
+            is_root ? "#5A5A5A"                  
+                    : (node.color == Color::red ? "#D85C5C"  
+                                                : "#BDBDBD"); 
+
+        const char* fontcolor = is_root ? "white" : "black";
+
+
+        std::ostringstream parent_ss, left_ss, right_ss;
+        if (auto p = node.parent_) parent_ss << p->key_; else parent_ss << "NIL";
+        if (node.left_ ) left_ss  << node.left_->key_;   else left_ss   << "NIL";
+        if (node.right_) right_ss << node.right_->key_;  else right_ss  << "NIL";
+
+        out << node.key_
+            << " [shape=Mrecord, style=filled, fillcolor=\"" << fill
+            << "\", fontcolor=\"" << fontcolor
+            << "\", label=\"{ key: " << node.key_
+            << " | parent: " << parent_ss.str()
+            << " | { L: " << left_ss.str() << " | R: " << right_ss.str()
+            << " } }\" ];\n";
+    }
+
+
 public:
     Red_black_tree(KeyT key) 
     {
@@ -266,27 +297,91 @@ public:
 
     }
 
-    void print(Node<KeyT>& node, std::ofstream& file_name) 
+
+    void print(const Node<KeyT>& node, std::ofstream& out, bool is_root = false) const
     {
-       // std::cout << " { " << node.key_ << " color: " << static_cast<int>(node.color);
-        if (node.left_)
+        emit_node_(node, out, is_root);
+
+        if (node.left_) 
         {
-            file_name 
-            << node.key_ << " [shape = Mrecord, style = filled, fillcolor = " << (static_cast<int>(node.color) == 0 ? "maroon" : "Gray") << ", label = \"" <<  node.key_ << "\" ];\n"
-            << node.left_->key_ << " [shape = Mrecord, style = filled, fillcolor = " << (static_cast<int>(node.left_->color) == 0 ? "maroon" : "Gray") << ", label = \"" << node.left_->key_ << "\" ];\n"
-            << node.key_ << " -> " << node.left_->key_ << ";\n";
-            print(*node.left_, file_name);
+            out << node.key_ << " -> " << node.left_->key_ << ";\n";
+            print(*node.left_, out, /*is_root=*/false);
+        } 
+
+        else 
+        {
+            std::string nil_id = "nilL_" + std::to_string(nil_counter_++);
+            out << nil_id
+                << " [shape=box, style=filled, fillcolor=\"#BDBDBD\", label=\"NULL\"];\n";
+            out << node.key_ << " -> " << nil_id << ";\n";
         }
+
         if (node.right_) 
         {
-            file_name 
-            << node.key_ << " [shape = Mrecord, style = filled, fillcolor = " << (static_cast<int>(node.color) == 0 ? "maroon" : "Gray") << ", label = \"" <<  node.key_ << "\" ];\n"
-            << node.right_->key_ << " [shape = Mrecord, style = filled, fillcolor = " << (static_cast<int>(node.right_->color) == 0 ? "maroon" : "Gray") << ", label = \"" << node.right_->key_ << "\" ];\n"
-            << node.key_ << " -> " << node.right_->key_ << ";\n";
-            print(*node.right_, file_name);
+            out << node.key_ << " -> " << node.right_->key_ << ";\n";
+            print(*node.right_, out, /*is_root=*/false);
+        } 
+
+        else 
+        {
+            std::string nil_id = "nilR_" + std::to_string(nil_counter_++);
+            out << nil_id
+                << " [shape=box, style=filled, fillcolor=\"#BDBDBD\", label=\"NULL\"];\n";
+            out << node.key_ << " -> " << nil_id << ";\n";
         }
-        //std::cout << " }";
     }
+
+
+    void dump(const std::string& dot_path = "file_graph.dot",
+              const std::string& png_path = "tree_graph.png",
+              bool auto_open = true) const
+    {
+        std::ofstream file(dot_path);
+        if (!file)
+            return; 
+
+
+        file << "digraph RB_tree {\n"
+                "label = < Red-black tree >;\n"
+                "bgcolor = \"#BAF0EC\";\n"
+                "rankdir=TB;\n"
+                "node  [shape=record, style=filled];\n"
+                "edge  [color=black, arrowsize=0.8];\n";
+
+        if (root_)
+            print(*root_, file, /*is_root=*/true);
+
+        file << "}\n";
+        file.close();
+
+        // генерируем png
+        {
+            std::string cmd = "dot -Tpng \"" + dot_path + "\" -o \"" + png_path + "\"";
+            (void)std::system(cmd.c_str());
+        }
+    }
+
+    // void print(Node<KeyT>& node, std::ofstream& file_name) 
+    // {
+    //    // std::cout << " { " << node.key_ << " color: " << static_cast<int>(node.color);
+    //     if (node.left_)
+    //     {
+    //         file_name 
+    //         << node.key_ << " [shape = Mrecord, style = filled, fillcolor = " << (static_cast<int>(node.color) == 0 ? "maroon" : "Gray") << ", label = \"" <<  node.key_ << "\" ];\n"
+    //         << node.left_->key_ << " [shape = Mrecord, style = filled, fillcolor = " << (static_cast<int>(node.left_->color) == 0 ? "maroon" : "Gray") << ", label = \"" << node.left_->key_ << "\" ];\n"
+    //         << node.key_ << " -> " << node.left_->key_ << ";\n";
+    //         print(*node.left_, file_name);
+    //     }
+    //     if (node.right_) 
+    //     {
+    //         file_name 
+    //         << node.key_ << " [shape = Mrecord, style = filled, fillcolor = " << (static_cast<int>(node.color) == 0 ? "maroon" : "Gray") << ", label = \"" <<  node.key_ << "\" ];\n"
+    //         << node.right_->key_ << " [shape = Mrecord, style = filled, fillcolor = " << (static_cast<int>(node.right_->color) == 0 ? "maroon" : "Gray") << ", label = \"" << node.right_->key_ << "\" ];\n"
+    //         << node.key_ << " -> " << node.right_->key_ << ";\n";
+    //         print(*node.right_, file_name);
+    //     }
+    //     //std::cout << " }";
+    // }
 };
 
 

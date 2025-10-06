@@ -5,6 +5,7 @@
 #include <fstream>   
 #include <sstream>  
 #include <cstdlib>  
+#include <filesystem>
 
 namespace Tree
 {
@@ -29,98 +30,63 @@ struct Node
 
     Node() = default;
 
-    Node(KeyT key) : key_(key), color(Color::red) {}
-
-    Node(Node&& rhs) 
-    {
-        key_  = rhs.key_;
-        color = rhs.color;
-    }
-
-    Node& operator=(const Node& rhs)
-    {
-        if (this == &rhs)
-        {
-            return *this;
-        }
-
-        key_    = rhs.key_;
-        color   = rhs.color;
-        parent_ = rhs.parent_;
-        left_   = rhs.left_;
-        right_  = rhs.right_;
-
-        return *this;
-    }
+    Node(const KeyT &key, Color color = Color::red) : key_{key}, color{color} {}
 };
 
 template <typename KeyT>
 class Red_black_tree
 {
-public:
     std::shared_ptr<Node<KeyT>> root_  = nullptr;
 
-private:
     // балансировка после вставки ключа 
     void fix_insert(std::shared_ptr<Node<KeyT>> node)
     {
-        while(node != root_ && node->parent_->color == Color::red)
+        while (node != root_ && node->parent_->color == Color::red) 
         {
-            if (node->parent_ && node->parent_->parent_)
+            if (!node->parent_ || !node->parent_->parent_) 
+                break; 
+
+            if (node->parent_ == node->parent_->parent_->left_) 
             {
-                if (node->parent_ == node->parent_->parent_->left_)
+                auto uncle = node->parent_->parent_->right_;
+                if (uncle && uncle->color == Color::red) 
                 {
-                    auto uncle = node->parent_->parent_->right_;
-                    if (uncle && uncle->color == Color::red)
-                    {
-                        node->parent_->color = Color::black;
-                        uncle->color         = Color::black;
-
-                        node->parent_->parent_->color = Color::red;
-                        node = node->parent_->parent_;
-                    }
-
-                    else
-                    {
-                        if (node == node->parent_->right_)
-                        {
-                            node = node->parent_;
-                            left_rotate(node);
-                        }
-
-                        node->parent_->color          = Color::black;
-                        node->parent_->parent_->color = Color::red;
-
-                        right_rotate(node->parent_->parent_);
-                    }
+                    fix_insert_without_rotate(node, uncle);
                 }
-                
-                else
+                else 
                 {
-                    auto uncle = node->parent_->parent_->left_;
-
-                    if (uncle && uncle->color == Color::red)
+                    if (node == node->parent_->right_) 
                     {
-                        node->parent_->color = Color::black;
-                        uncle->color         = Color::black;
-
-                        node->parent_->parent_->color = Color::red;
-                        node = node->parent_->parent_;
+                        node = node->parent_;
+                        left_rotate(node);
                     }
 
-                    else 
-                    {
-                        if (node == node->parent_->left_) 
-                        {
-                            node = node->parent_;
-                            right_rotate(node);
-                        }
+                    node->parent_->color           = Color::black;
+                    node->parent_->parent_->color = Color::red;
 
-                        node->parent_->color          = Color::black;
-                        node->parent_->parent_->color = Color::red;
-                        
-                        left_rotate(node->parent_->parent_);
+                    right_rotate(node->parent_->parent_);
+                }
+            } 
+                
+            else
+            {
+                auto uncle = node->parent_->parent_->left_;
+
+                if (uncle && uncle->color == Color::red)                
+                    fix_insert_without_rotate(node, uncle);
+
+                else 
+                {
+                    if (node == node->parent_->left_) 
+                    {
+                        node = node->parent_;
+                        right_rotate(node);
                     }
+
+                    node->parent_->color          = Color::black;
+                    node->parent_->parent_->color = Color::red;
+                    
+                    left_rotate(node->parent_->parent_);
                 }
             }
         }
@@ -128,9 +94,21 @@ private:
         root_->color = Color::black;
     }
 
-
-    void left_rotate(std::shared_ptr<Node<KeyT>> node) // TODO проверить есть ли ребенок 
+    void fix_insert_without_rotate(std::shared_ptr<Node<KeyT>> node, 
+                                   std::shared_ptr<Node<KeyT>> uncle) 
     {
+        node->parent_->color = Color::black;
+        uncle->color         = Color::black;
+
+        node->parent_->parent_->color = Color::red;
+        node                          = node->parent_->parent_;
+    }
+
+
+    void left_rotate(const std::shared_ptr<Node<KeyT>> node) 
+    {
+        if (!node || !node->right_) return;
+
         auto y = node->right_;
                  node->right_ = y->left_;
 
@@ -151,8 +129,10 @@ private:
                    node->parent_ = y;
     }
 
-    void right_rotate(std::shared_ptr<Node<KeyT>> node)  // TODO проверить есть ли ребенок 
+    void right_rotate(const std::shared_ptr<Node<KeyT>> node)  
     {
+        if (!node || !node->left_)  return;
+
         auto y = node->left_;
                  node->left_ = y->right_;
 
@@ -179,12 +159,13 @@ public:
 
     Red_black_tree(KeyT key) 
     {
-        root_ = std::make_shared<Node<KeyT>> (key);
-        root_->color = Color::black;
+        root_ = std::make_shared<Node<KeyT>>(key, Color::black);
     }
 
+    std::shared_ptr<Node<KeyT>> get_root() const { return root_; }
+
     // вставка ключа 
-    void insert_elem(KeyT key)
+    void insert_elem(const KeyT key)
     {
         auto new_node = std::make_shared<Node<KeyT>> (key);
         auto current  = root_;
@@ -217,7 +198,7 @@ public:
         fix_insert(new_node);         // балансировка    
     }
 
-    uint64_t range_queries(KeyT key1, KeyT key2) const 
+    uint64_t range_queries(const KeyT key1, const KeyT key2) const 
     { 
         uint64_t counter = 0;
 
@@ -228,128 +209,128 @@ public:
 
 
 private:
-    void search(std::shared_ptr<Node<KeyT>> node, uint64_t& counter, KeyT key1, KeyT key2) const 
+    void search(const std::shared_ptr<Node<KeyT>> node, uint64_t& counter, const KeyT& key1, const KeyT& key2) const 
     {
-        if (node->key_ >= key1 && node->key_ <= key2)
+        if (!node) return;
+        
+        if (node->key_ >= key1 && node->key_ <= key2) 
         {
             counter++;
             if (node->left_)
                 search(node->left_, counter, key1, key2);
 
             if (node->right_)
-            search(node->right_, counter, key1, key2);
+                search(node->right_, counter, key1, key2);
         }
 
         else if (node->key_ < key1 && node->right_) 
-        {
             search(node->right_, counter, key1, key2);
-        }
-
+        
         else if (node->key_ > key2 && node->left_) 
-        {
             search(node->left_, counter, key1, key2);
-        }
-
+        
         return;
     }
+};
 
-    std::shared_ptr<Node<KeyT>> lower_bound(KeyT key) const;
-    std::shared_ptr<Node<KeyT>> upper_bound(KeyT key) const; 
-
-    void delete_node() 
-    {
-
-    }
-
-    mutable std::size_t nil_counter_ = 0; // уникальные имена для NULL-листьев
-
-    void emit_node_(const Node<KeyT>& node, std::ofstream& out, bool is_root) const
-    {
-        const char* fill = is_root ? "#5A5A5A"                  
-                                   : (node.color == Color::red ? "#D85C5C"  
-                                   : "#BDBDBD"); 
-
-        const char* fontcolor = is_root ? "white" : "black";
+}; // namespace Tree
 
 
-        std::ostringstream parent_ss, left_ss, right_ss;
-        if (auto p = node.parent_) parent_ss << p->key_; else parent_ss << "NIL";
-        if (node.left_ ) left_ss  << node.left_->key_;   else left_ss   << "NIL";
-        if (node.right_) right_ss << node.right_->key_;  else right_ss  << "NIL";
 
-        out << node.key_
-            << " [shape=Mrecord, style=filled, fillcolor=\"" << fill
-            << "\", fontcolor=\"" << fontcolor
-            << "\", label=\"{ key: " << node.key_
-            << " | parent: " << parent_ss.str()
-            << " | { L: " << left_ss.str() << " | R: " << right_ss.str()
-            << " } }\" ];\n";
-    }
+namespace RangeQueries 
+{
 
+enum class Mode 
+{
+    cin,
+    file
+};
+
+template<typename KeyT>
+class Range_queries 
+{
 public:
-    void print(const Node<KeyT>& node, std::ofstream& out, bool is_root = false) const
+    Tree::Red_black_tree<KeyT> rb_tree;
+
+
+    void add_element(Mode mode) 
     {
-        emit_node_(node, out, is_root);
+        if (mode != Mode::cin)
+            return;
 
-        if (node.left_) 
+        KeyT key;
+        
+        if (!(std::cin >> key))
         {
-            out << node.key_ << " -> " << node.left_->key_ << ";\n";
-            print(*node.left_, out, /*is_root=*/false);
-        } 
+            std::cerr << "WARN: failed to read key from stdin\n";
 
-        else 
-        {
-            std::string nil_id = "nilL_" + std::to_string(nil_counter_++);
-            out << nil_id
-                << " [shape=box, style=filled, fillcolor=\"#BDBDBD\", label=\"NULL\"];\n";
-            out << node.key_ << " -> " << nil_id << ";\n";
+            return;
         }
 
-        if (node.right_) 
-        {
-            out << node.key_ << " -> " << node.right_->key_ << ";\n";
-            print(*node.right_, out, /*is_root=*/false);
-        } 
+        rb_tree.insert_elem(key);
+    }
 
-        else 
-        {
-            std::string nil_id = "nilR_" + std::to_string(nil_counter_++);
-            out << nil_id
-                << " [shape=box, style=filled, fillcolor=\"#BDBDBD\", label=\"NULL\"];\n";
-            out << node.key_ << " -> " << nil_id << ";\n";
+    void add_element(Mode mode, std::ifstream& file) 
+    {
+        if (mode != Mode::file)
+            return;
+
+        KeyT key;
+
+        if (!(file >> key)) 
+        { 
+            std::cerr << "[DBG] read key FAIL\n"; return; 
         }
+
+        std::cerr << "[DBG] insert key: " << key << "\n";
+
+        rb_tree.insert_elem(key);
     }
 
 
-    void dump(const std::string& dot_path = "file_graph.dot",
-              const std::string& png_path = "tree_graph.png",
-              bool auto_open = true) const
+    int64_t find_range_elements(KeyT a, KeyT b) const 
     {
-        std::ofstream file(dot_path);
-        if (!file)
-            return; 
-
-
-        file << "digraph RB_tree {\n"
-                "label = < Red-black tree >;\n"
-                "bgcolor = \"#BAF0EC\";\n"
-                "rankdir=TB;\n"
-                "node  [shape=record, style=filled];\n"
-                "edge  [color=black, arrowsize=0.8];\n";
-
-        if (root_)
-            print(*root_, file, /*is_root=*/true);
-
-        file << "}\n";
-        file.close();
-
-        // генерируем png
+        if (b < a) 
         {
-            std::string cmd = "dot -Tpng \"" + dot_path + "\" -o \"" + png_path + "\"";
-            (void)std::system(cmd.c_str());
+            return 0;
+        }
+        return static_cast<int64_t>(rb_tree.range_queries(a, b));
+    }
+
+
+    int64_t find_range_elements(Mode mode) 
+    {
+        if (mode != Mode::cin)
+            return 0;
+
+        KeyT a{}, b{};
+
+        if (!(std::cin >> a >> b)) 
+        {
+            std::cerr << "WARN: failed to read range from stdin\n";
+            
+            return 0;
         }
 
+        return find_range_elements(a, b); 
+    }
+
+    int64_t find_range_elements(Mode mode, std::ifstream& file) 
+    {
+        if (mode != Mode::file)
+            return 0;
+
+        KeyT a{}, b{};
+
+        if (!(file >> a >> b)) 
+        {
+            std::cerr << "WARN: failed to read range from file\n";
+
+            return 0;
+        }
+
+        return ind_range_elements(a,b);; 
     }
 };
 
-};
+} // namespace RangeQueries

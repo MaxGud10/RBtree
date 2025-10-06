@@ -11,6 +11,10 @@ set(test_srcs
     tests/src/tests.cpp
 )
 
+enable_testing()
+find_package(GTest REQUIRED)
+include_directories(${GTEST_INCLUDE_DIRS})
+
 option(SET_MODE_ENABLED "Enable SET mode" OFF)
 
 set(CUSTOM_SET_VALUE "" CACHE STRING "Режим исполнения")
@@ -49,6 +53,7 @@ target_include_directories(rb_tree.x PRIVATE
 target_include_directories(test.x PRIVATE 
             ${CMAKE_SOURCE_DIR}/include        
 )
+target_link_libraries(test.x GTest::GTest GTest::Main)
 
 target_compile_options(rb_tree.x  PRIVATE "$<$<CONFIG:RELEASE>:${CMAKE_CXX_FLAGS_RELEASE}>" ${FLAGS})
 target_compile_options(test.x  PRIVATE "$<$<CONFIG:RELEASE>:${CMAKE_CXX_FLAGS_RELEASE}>" ${FLAGS})

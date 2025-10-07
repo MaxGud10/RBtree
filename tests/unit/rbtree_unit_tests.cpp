@@ -1,4 +1,3 @@
-// tests/unit/rbtree_unit_tests.cpp
 #include <gtest/gtest.h>
 #include <memory>
 #include "red_black_tree.hpp"
@@ -6,11 +5,12 @@
 using Key = int64_t;
 
 template <class KeyT>
-static int CheckRB(const std::shared_ptr<Tree::Node<KeyT>>& n) {
-    if (!n) return 1; // NIL считаем чёрной вершиной
+static int CheckRB(const std::shared_ptr<Tree::Node<KeyT>>& n) 
+{
+    if (!n) return 1; 
 
-    // красный узел не должен иметь красных детей
-    if (n->color == Tree::Color::red) {
+    if (n->color == Tree::Color::red) 
+    {
         if (n->left_)  EXPECT_EQ(n->left_->color,  Tree::Color::black);
         if (n->right_) EXPECT_EQ(n->right_->color, Tree::Color::black);
     }
@@ -23,10 +23,11 @@ static int CheckRB(const std::shared_ptr<Tree::Node<KeyT>>& n) {
 }
 
 
-TEST(RBTreeUnit, EmptyTreeRangeIsZero) {
+TEST(RBTreeUnit, EmptyTreeRangeIsZero){
     Tree::Red_black_tree<Key> t;
     EXPECT_EQ(t.range_queries(0, 10), 0);
-    EXPECT_EQ(t.range_queries(10, 0), 0); // по контракту при a>b возвращаем 0
+    EXPECT_EQ(t.range_queries(10, 0), 0); 
+    
 }
 
 TEST(RBTreeUnit, SingleInsert) {

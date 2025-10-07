@@ -44,7 +44,7 @@ class Red_black_tree
         while (node != root_ && node->parent_->color == Color::red) 
         {
             if (!node->parent_ || !node->parent_->parent_) 
-                break; 
+                    ; 
 
             if (node->parent_ == node->parent_->parent_->left_) 
             {
@@ -65,6 +65,7 @@ class Red_black_tree
                     node->parent_->parent_->color = Color::red;
 
                     right_rotate(node->parent_->parent_);
+                    node = node->parent_;
                 }
             } 
                 
@@ -87,6 +88,7 @@ class Red_black_tree
                     node->parent_->parent_->color = Color::red;
                     
                     left_rotate(node->parent_->parent_);
+                    node = node->parent_;
                 }
             }
         }
@@ -98,7 +100,8 @@ class Red_black_tree
                                    std::shared_ptr<Node<KeyT>> uncle) 
     {
         node->parent_->color = Color::black;
-        uncle->color         = Color::black;
+        if (uncle) 
+            uncle->color         = Color::black;
 
         node->parent_->parent_->color = Color::red;
         node                          = node->parent_->parent_;
@@ -279,10 +282,9 @@ public:
 
         if (!(file >> key)) 
         { 
-            std::cerr << "[DBG] read key FAIL\n"; return; 
+            std::cerr << "WARN: read key FAIL\n"; return; 
         }
-
-        std::cerr << "[DBG] insert key: " << key << "\n";
+ 
 
         rb_tree.insert_elem(key);
     }
@@ -308,7 +310,7 @@ public:
         if (!(std::cin >> a >> b)) 
         {
             std::cerr << "WARN: failed to read range from stdin\n";
-            
+
             return 0;
         }
 
@@ -329,7 +331,7 @@ public:
             return 0;
         }
 
-        return ind_range_elements(a,b);; 
+        return find_range_elements(a,b);; 
     }
 };
 

@@ -10,7 +10,7 @@
 #include "graphic_dump.hpp"
 
 
-static int64_t RangeQueries_set(const std::set<int64_t>& set, int64_t a, int64_t b);
+static int64_t range_queries_set(const std::set<int64_t>& set, int64_t a, int64_t b);
 
 int main() 
 {
@@ -62,8 +62,8 @@ int main()
                 std::cout << ans << ' ';
 
                 #ifdef SET_MODE_ENABLED
-                    auto ans_set = RangeQueries_set(set, a, b);
-                    std::cerr << "[DBG] set range [" << a << ", " << b << "] -> " << ans_set << "\n";
+                    auto ans_set = range_queries_set(set, a, b);
+                    std::cerr << "DBG: set range [" << a << ", " << b << "] -> " << ans_set << "\n";
                 #endif
 
                 break;
@@ -77,18 +77,15 @@ int main()
 
     std::cout << std::endl;
 
-
-    Tree::Print_tree<int64_t> pr_tr;
-    pr_tr.dump(range_quer.rb_tree,
-               "graphviz/file_graph.dot",
-               "graphviz/tree_graph.png",
-               true);
-
+    #ifdef CUSTOM_MODE_DEBUG
+        Tree::Print_tree<int64_t> pr_tr;
+        pr_tr.dump(range_quer.rb_tree, "graphviz/file_graph.dot", "graphviz/tree_graph.png", true);
+    #endif
 
     return 0;
 }
 
-int64_t RangeQueries_set(const std::set<int64_t>& set, int64_t a, int64_t b) 
+int64_t range_queries_set(const std::set<int64_t>& set, int64_t a, int64_t b) 
 {
     auto l1 = set.lower_bound(a);
     auto l2 = set.upper_bound(b);

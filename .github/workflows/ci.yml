@@ -1,0 +1,77 @@
+name: CI
+
+on:
+  push:
+    branches: [ "**" ]
+  pull_request:
+    branches: [ "**" ]
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - name: Release (SET_MODE_ENABLED=OFF)
+            build_type: Release
+            set_mode: OFF
+            custom_set: ""
+          - name: Debug (SET_MODE_ENABLED=ON, CUSTOM_SET_VALUE=DEBUG)
+            build_type: Debug
+            set_mode: ON
+            custom_set: DEBUG
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install deps (Graphviz, ccache, Ninja)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y graphviz ccache ninja-build
+
+      - name: Configure (CMake)
+        run: |
+          cmake -S . -B build \
+            -G Ninja \
+            -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }} \
+            -DSET_MODE_ENABLED=${{ matrix.config.set_mode }} \
+            $([ -n "${{ matrix.config.custom_set }}" ] && echo -DCUSTOM_SET_VALUE=${{ matrix.config.custom_set }})
+
+      - name: Build
+        run: cmake --build build --config ${{ matrix.config.build_type }} -- -k 0
+
+      - name: Run ctest
+        working-directory: build
+        env:
+          CTEST_OUTPUT_ON_FAILURE: 1
+        run: ctest -C ${{ matrix.config.build_type }} --output-on-failure
+
+      
+      - name: Upload Graphviz artifacts (if present)
+        uses: actions/upload-artifact@v4
+        with:
+          name: graphviz-${{ matrix.config.build_type }}
+          path: |
+            graphviz/*.png
+            graphviz/*.dot
+          if-no-files-found: ignore
+
+  
+  portable-build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ macos-latest, windows-latest ]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+      - name: Build
+        run: cmake --build build --config Release

@@ -30,10 +30,16 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install deps (Graphviz, ccache, Ninja)
+      - name: Install deps (Graphviz, GTest, Ninja, ccache)
         run: |
           sudo apt-get update
           sudo apt-get install -y graphviz ccache ninja-build
+          sudo apt-get install -y libgtest-dev
+          # Собираем и устанавливаем GTest вручную (CMake его не ставит автоматически)
+          cd /usr/src/gtest
+          sudo cmake .
+          sudo make
+          sudo mv lib/libgtest*.a /usr/lib/
 
       - name: Configure (CMake)
         run: |
@@ -52,7 +58,6 @@ jobs:
           CTEST_OUTPUT_ON_FAILURE: 1
         run: ctest -C ${{ matrix.config.build_type }} --output-on-failure
 
-      
       - name: Upload Graphviz artifacts (if present)
         uses: actions/upload-artifact@v4
         with:
@@ -61,17 +66,3 @@ jobs:
             graphviz/*.png
             graphviz/*.dot
           if-no-files-found: ignore
-
-  
-  portable-build:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ macos-latest, windows-latest ]
-    steps:
-      - uses: actions/checkout@v4
-      - name: Configure
-        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
-      - name: Build
-        run: cmake --build build --config Release

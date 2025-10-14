@@ -99,7 +99,7 @@ ctest --output-on-failure
 
 ## Запуск unit-теста отдельно
 
-```bach
+```bash
 cmake --build build --target rbtree_unit_tests
 build/tests/rbtree_unit_tests
 ```
@@ -110,7 +110,8 @@ build/tests/rbtree_unit_tests
 Включите дополнительный режим отладки с помощью:
 ```bash
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DSET_MODE_ENABLED=ON -DCUSTOM_SET_VALUE=DEBUG
-cmake --build build --target test.out
+cmake --build build
+./build/rb_tree.out
 ```
 - В этом режиме результаты запросов диапазона из красно-чёрного дерева сравниваются с результатами из std::set и выводятся на консоль.
 

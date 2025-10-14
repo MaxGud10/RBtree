@@ -26,13 +26,62 @@ int main()
     int64_t a = 0;
     int64_t b = 0;
 
-    while((std::cin >> mode).good()) 
+    // while((std::cin >> mode).good()) 
+    // {
+    //     switch (mode) 
+    //     {
+    //         case 'k': 
+    //         {
+    //             if (!(std::cin >> key))
+    //             {
+    //                 std::cerr << "ERROR: expected key after 'k'\n";
+    //                 return 1;
+    //             }
+
+    //             range_quer.rb_tree.insert_elem(key);
+
+    //             #ifdef SET_MODE_ENABLED
+    //                 set.insert(key);
+    //             #endif
+
+    //             break;
+    //         }
+
+    //         case 'q': 
+    //         {
+    //             if (!(std::cin >> a >> b))
+    //             {
+    //                 std::cerr << "ERROR: expected two numbers after 'q'\n";
+    //                 return 1;
+    //             }
+
+    //             if (a > b)
+    //                 std::swap(a, b);
+
+    //             auto ans = range_quer.find_range_elements(a, b);
+    //             std::cout << ans << ' ';
+
+    //             #ifdef SET_MODE_ENABLED
+    //                 auto ans_set = range_queries_set(set, a, b);
+    //                 std::cerr << "DBG: set range [" << a << ", " << b << "] -> " << ans_set << "\n";
+    //             #endif
+
+    //             break;
+    //         }
+
+    //         default:
+    //             std::cerr << "ERROR: unknown mode: '" << mode << "'\n";
+    //             return 1;
+    //     }
+    // }
+
+    while (std::cin >> mode) 
     {
         switch (mode) 
         {
             case 'k': 
             {
-                if (!(std::cin >> key))
+                if (!(std::cin >> key)) 
                 {
                     std::cerr << "ERROR: expected key after 'k'\n";
                     return 1;
@@ -49,21 +98,22 @@ int main()
 
             case 'q': 
             {
-                if (!(std::cin >> a >> b))
+                if (!(std::cin >> a >> b)) 
                 {
                     std::cerr << "ERROR: expected two numbers after 'q'\n";
                     return 1;
                 }
 
-                if (a > b)
-                    std::swap(a, b);
-
-                auto ans = range_quer.rb_tree.range_queries(a, b);
+                const auto ans = range_quer.find_range_elements(a, b);
                 std::cout << ans << ' ';
 
                 #ifdef SET_MODE_ENABLED
-                    auto ans_set = range_queries_set(set, a, b);
-                    std::cerr << "DBG: set range [" << a << ", " << b << "] -> " << ans_set << "\n";
+                    const auto check = range_queries_set(set, a, b);
+                    if (check != ans) {
+                        std::cerr << "DBG set=" << check
+                                  << " tree="   << ans
+                                  << " for q "  << a   << ' ' << b << '\n';
+                    }
                 #endif
 
                 break;
@@ -87,10 +137,11 @@ int main()
 
 int64_t range_queries_set(const std::set<int64_t>& set, int64_t a, int64_t b) 
 {
-    auto l1 = set.lower_bound(a);
-    auto l2 = set.upper_bound(b);
-    if (std::distance(set.begin(), l1) > std::distance(set.begin(), l2))
-        std::swap(l1, l2);
+    if (b <= a) 
+        return 0;
 
-    return std::distance(l1, l2);
+    auto first = set.lower_bound(a);
+    auto last  = set.upper_bound(b);
+
+    return std::distance(first, last);
 }

@@ -44,7 +44,7 @@ class Red_black_tree
         while (node != root_ && node->parent_->color == Color::red) 
         {
             if (!node->parent_ || !node->parent_->parent_) 
-                    ; 
+                break; 
 
             if (node->parent_ == node->parent_->parent_->left_) 
             {
@@ -62,7 +62,7 @@ class Red_black_tree
                     }
 
                     node->parent_->color           = Color::black;
-                    node->parent_->parent_->color = Color::red;
+                    node->parent_->parent_->color  = Color::red;
 
                     right_rotate(node->parent_->parent_);
                     node = node->parent_;
@@ -101,7 +101,7 @@ class Red_black_tree
     {
         node->parent_->color = Color::black;
         if (uncle) 
-            uncle->color         = Color::black;
+            uncle->color     = Color::black;
 
         node->parent_->parent_->color = Color::red;
         node                          = node->parent_->parent_;
@@ -292,7 +292,7 @@ public:
 
     int64_t find_range_elements(KeyT a, KeyT b) const 
     {
-        if (b < a) 
+        if (b <= a) 
         {
             return 0;
         }

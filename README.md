@@ -39,7 +39,21 @@ q 10 20
 3
 ```
 
-## Создание проекта
+# Создание проекта
+
+
+## Режимы работы
+
+ проекте реализовано несколько режимов, включаемых через параметры **CMake**.
+
+| Режим | Флаги CMake | Назначение |
+|:------|:-------------|:-----------|
+| **Основной режим** (по умолчанию) | `-DSET_MODE_ENABLED=OFF` | Работает только дерево, выводит ответы. |
+| **Проверки** | `-DSET_MODE_ENABLED=ON -DCUSTOM_SET_VALUE=VERIFY` | Дополнительно сверяет ответы с `std::set`, выводит расхождения в `stderr`. |
+| **Замера времени** | `-DSET_MODE_ENABLED=ON -DCUSTOM_SET_VALUE=BENCH` | Измеряет время выполнения операций для дерева и `std::set` и выводит сводку. |
+| **Debug* | `-DSET_MODE_ENABLED=ON -DCUSTOM_SET_VALUE=DEBUG -DCMAKE_BUILD_TYPE=Debug` | После выполнения создаёт графическое представление дерева (`graphviz/tree_graph.png`). |
+
+-----------------------------------------
 
 ### Зависимости
 
@@ -47,31 +61,47 @@ q 10 20
 - CMake (минимальная версия 3.11).
 - Установлен Graphviz (команда `dot`).
 
-### Шаги
 
-1. Клонируем репозиторий.
-```
+### Запуск проекта 
+
+```bash
 git clone https://github.com/MaxGud10/RBtree
 cd RBtree
-```
-2. Создайте каталог сборки 
-```bash
 mkdir build
- ```
-3. Сконфигурируйте проект с помощью CMake:
-```bash
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DSET_MODE_ENABLED=OFF
 ```
-4. Создайте проект:
-```bash
-cmake --build build
- ```
-5. Запустите программу:
-```bash
-build/rb_tree.out
- ```
 
------------------------------------------
+ - `Основной режимy`
+ ```bash
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DSET_MODE_ENABLED=OFF
+cmake --build build
+./build/rb_tree.out < tests/end2end/small_input.tx
+
+```
+
+- `Режим проверки`
+```bash
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DSET_MODE_ENABLED=ON -DCUSTOM_SET_VALUE=VERIFY
+cmake --build build
+./build/rb_tree.out < tests/end2end/small_input.txt
+
+```
+При несовпадении результатов дерево постороенное через `set` выведет отладочную информацию в `stderr`.
+
+
+- `Режим замера времени`
+```bash
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DSET_MODE_ENABLED=ON -DCUSTOM_SET_VALUE=BENCH
+cmake --build build
+./build/rb_tree.out < tests/end2end/big_input.txt 1>/dev/null
+```
+
+- `Debug`
+```bash
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DSET_MODE_ENABLED=ON -DCUSTOM_SET_VALUE=DEBUG
+cmake --build build
+./build/rb_tree.out < tests/end2end/small_input.txt
+```
+Программа выводит графическое представление красно-чёрного дерева с помощью [!Graphviz](/graphviz/tree_graph.png). 
 
 # Тесты
 
@@ -103,20 +133,6 @@ ctest --output-on-failure
 cmake --build build --target rbtree_unit_tests
 build/tests/rbtree_unit_tests
 ```
-
-
-## Debug with std::set
-
-Включите дополнительный режим отладки с помощью:
-```bash
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DSET_MODE_ENABLED=ON -DCUSTOM_SET_VALUE=DEBUG
-cmake --build build
-./build/rb_tree.out
-```
-- В этом режиме результаты запросов диапазона из красно-чёрного дерева сравниваются с результатами из std::set и выводятся на консоль.
-
-- Так же программа выводит графическое представление красно-чёрного дерева с помощью Graphviz. 
-
 
 ### Пример графического представления дерева
 

@@ -14,6 +14,18 @@ namespace Tree
 template <typename KeyT>
 class Print_tree 
 {
+    // проверка наличия команды в PATH (POSIX: command -v, Windows: where)
+    static bool command_exists(const std::string& cmd)
+    {
+    #ifdef _WIN32
+        std::string check = "where " + cmd + " >nul 2>nul";
+    #else
+        std::string check = "command -v " + cmd + " >/dev/null 2>&1";
+    #endif
+        int rc = std::system(check.c_str());
+        return rc == 0;
+    }
+
     mutable std::size_t nil_counter_ = 0; // уникальные имена для NULL-листьев
 
     // рисует один узел (для Graphviz .dot)
@@ -24,7 +36,12 @@ class Print_tree
         const char* font = is_root ? "white" : "black";
 
         std::ostringstream parent_ss, left_ss, right_ss;
-        if (auto p = node.parent_) parent_ss << p->key_; else parent_ss << "NIL";
+
+        if (auto parent_locked = node.parent_.lock()) 
+            parent_ss << parent_locked->key_; 
+        else 
+            parent_ss << "NIL";
+
         if (node.left_ ) left_ss  << node.left_->key_;   else left_ss   << "NIL";
         if (node.right_) right_ss << node.right_->key_;  else right_ss  << "NIL";
 
@@ -38,19 +55,18 @@ class Print_tree
     }
 
     // рекурсивный обход и соединение узлов
-    void print_(const Tree::Node<KeyT>& node, std::ofstream& out, bool is_root = false) const 
+    void print_(const Tree::Node<KeyT>& node, std::ofstream& out, std::size_t& nil_counter, bool is_root = false) const 
     {
         emit_node_(node, out, is_root);
 
         if (node.left_) 
         {
             out << node.key_ << " -> " << node.left_->key_ << ";\n";
-            print_(*node.left_, out, false);
+            print_(*node.left_, out, nil_counter, false);
         } 
-
         else 
         {
-            std::string nil_id = "nilL_" + std::to_string(nil_counter_++);
+            std::string nil_id = "nilL_" + std::to_string(nil_counter++);
             out << nil_id
                 << " [shape=box, style=filled, fillcolor=\"#BDBDBD\", label=\"NULL\"];\n";
             out << node.key_ << " -> " << nil_id << ";\n";
@@ -59,12 +75,11 @@ class Print_tree
         if (node.right_) 
         {
             out << node.key_ << " -> " << node.right_->key_ << ";\n";
-            print_(*node.right_, out, false);
+            print_(*node.right_, out, nil_counter, false);
         } 
-
         else 
         {
-            std::string nil_id = "nilR_" + std::to_string(nil_counter_++);
+            std::string nil_id = "nilR_" + std::to_string(nil_counter++);
             out << nil_id
                 << " [shape=box, style=filled, fillcolor=\"#BDBDBD\", label=\"NULL\"];\n";
             out << node.key_ << " -> " << nil_id << ";\n";
@@ -95,8 +110,8 @@ public:
 
         if (auto root = rb_tree.get_root()) 
         {
-            nil_counter_ = 0;
-            print_(*root, out, true);
+            std::size_t nil_counter = 0;
+            print_(*root, out, nil_counter, true);
         } 
         else 
         {
@@ -106,17 +121,50 @@ public:
         out << "}\n";
         out.close();
 
-        std::string cmd = "dot -Tpng \"" + dot_path + "\" -o \"" + png_path + "\"";
-        (void)std::system(cmd.c_str()); // чтобы варинингов не было | std::system(cmd.c_str());
-        if (auto_open) 
+        // генерируем PNG только если утставнолен Graphviz
+        if (!command_exists("dot"))
         {
-            #ifdef _WIN32
-                (void)std::system(("start " + png_path).c_str());
-            #else
-                (void)std::system(("xdg-open " + png_path).c_str());
-            #endif
+            std::cerr << "[WARN] Graphviz (dot) not found in PATH. PNG won't be generated.\n"
+                      << "       You can install graphviz and run:\n"
+                      << "       dot -Tpng \"" << dot_path << "\" -o \"" << png_path << "\"\n";
+            return;
         }
+
+        {
+            std::string cmd = "dot -Tpng \"" + dot_path + "\" -o \"" + png_path + "\"";
+            (void)std::system(cmd.c_str());
+        }
+
+        if (!auto_open)
+            return;
+
+        // авто-открытие png (проверяем доступность команды на posix; на windows 'start' доступен)
+    #ifdef _WIN32
+        std::string open_cmd = "start \"\" \"" + png_path + "\"";
+        (void)std::system(open_cmd.c_str());
+    #elif defined(__APPLE__)
+        if (command_exists("open"))
+        {
+            std::string open_cmd = "open \"" + png_path + "\"";
+            (void)std::system(open_cmd.c_str());
+        }
+        else
+        {
+            std::cerr << "WARN 'open' not found. Please open \"" << png_path << "\" manually.\n";
+        }
+    #else
+        if (command_exists("xdg-open"))
+        {
+            std::string open_cmd = "xdg-open \"" + png_path + "\"";
+            (void)std::system(open_cmd.c_str());
+        }
+        else
+        {
+            std::cerr << "WARN 'xdg-open' not found. Please open \"" << png_path << "\" manually.\n";
+        }
+    #endif
     }
+    
 };
 
 } // namespace Tree

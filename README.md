@@ -74,7 +74,7 @@ mkdir build
  ```bash
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DSET_MODE_ENABLED=OFF
 cmake --build build
-./build/rb_tree.out < tests/end2end/small_input.txt
+./build/rb_tree < tests/end2end/small_input.txt
 
 ```
 
@@ -82,7 +82,7 @@ cmake --build build
 ```bash
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DSET_MODE_ENABLED=ON -DCUSTOM_SET_VALUE=VERIFY
 cmake --build build
-./build/rb_tree.out < tests/end2end/small_input.txt
+./build/rb_tree < tests/end2end/small_input.txt
 
 ```
 При несовпадении результатов дерево постороенное через `set` выведет отладочную информацию в `stderr`.
@@ -92,14 +92,14 @@ cmake --build build
 ```bash
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DSET_MODE_ENABLED=ON -DCUSTOM_SET_VALUE=BENCH
 cmake --build build
-./build/rb_tree.out < tests/end2end/big_input.txt 1>/dev/null
+./build/rb_tree < tests/end2end/big_input.txt 1>/dev/null
 ```
 
 - `Debug`
 ```bash
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DSET_MODE_ENABLED=ON -DCUSTOM_SET_VALUE=DEBUG
 cmake --build build
-./build/rb_tree.out < tests/end2end/small_input.txt
+./build/rb_tree < tests/end2end/small_input.txt
 ```
 Программа выводит графическое представление красно-чёрного дерева с помощью [!Graphviz](/graphviz/tree_graph.png). 
 

@@ -58,7 +58,7 @@ TEST(RBTreeUnit, RBInvariantsAfterInsert) {
     for (Key x : {10, 20, 30, 15, 25, 5, 1, 50, 60, 55, 54})
         t.insert_elem(x);
 
-    auto root = t.get_root();
+    auto root = std::const_pointer_cast<Tree::Node<Key>>(t.get_root());
     ASSERT_TRUE(root);
     EXPECT_EQ(root->color, Tree::Color::black);
     (void)CheckRB(root);

@@ -51,7 +51,7 @@ q 10 20
 | **Основной режим** (по умолчанию) | `-DSET_MODE_ENABLED=OFF` | Работает только дерево, выводит ответы. |
 | **Проверки** | `-DSET_MODE_ENABLED=ON -DCUSTOM_SET_VALUE=VERIFY` | Дополнительно сверяет ответы с `std::set`, выводит расхождения в `stderr`. |
 | **Замера времени** | `-DSET_MODE_ENABLED=ON -DCUSTOM_SET_VALUE=BENCH` | Измеряет время выполнения операций для дерева и `std::set` и выводит сводку. |
-| **Debug* | `-DSET_MODE_ENABLED=ON -DCUSTOM_SET_VALUE=DEBUG -DCMAKE_BUILD_TYPE=Debug` | После выполнения создаёт графическое представление дерева (`graphviz/tree_graph.png`). |
+| **Debug** | `-DSET_MODE_ENABLED=ON -DCUSTOM_SET_VALUE=DEBUG -DCMAKE_BUILD_TYPE=Debug` | После выполнения создаёт графическое представление дерева (`graphviz/tree_graph.png`). |
 
 -----------------------------------------
 
@@ -74,7 +74,7 @@ mkdir build
  ```bash
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DSET_MODE_ENABLED=OFF
 cmake --build build
-./build/rb_tree.out < tests/end2end/small_input.tx
+./build/rb_tree.out < tests/end2end/small_input.txt
 
 ```
 
@@ -118,7 +118,7 @@ cmake --build build
 ```bash
 cd build
 ctest --output-on-failure
-```
+``` 
 Вы увидите 3 теста:
 - `unit_all` — набор GoogleTest, проверяющих инварианты КЧ-дерева и корректность основных операций
 

@@ -17,13 +17,13 @@ add_test(NAME unit_all
 
 
 add_test(NAME e2e_small
-  COMMAND bash -c "$<TARGET_FILE:rb_tree.out> < ${CMAKE_SOURCE_DIR}/tests/end2end/small_input.txt | diff -u - ${CMAKE_SOURCE_DIR}/tests/end2end/small_expected.txt"
+  COMMAND bash -c "$<TARGET_FILE:rb_tree> < ${CMAKE_SOURCE_DIR}/tests/end2end/small_input.txt | diff -u - ${CMAKE_SOURCE_DIR}/tests/end2end/small_expected.txt"
   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 )
 
 
 add_test(NAME e2e_big_runs
-  COMMAND bash -c "$<TARGET_FILE:rb_tree.out> < ${CMAKE_SOURCE_DIR}/tests/end2end/big_input.txt > /dev/null"
+  COMMAND bash -c "$<TARGET_FILE:rb_tree> < ${CMAKE_SOURCE_DIR}/tests/end2end/big_input.txt > /dev/null"
   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 )
 

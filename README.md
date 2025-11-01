@@ -101,7 +101,14 @@ cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DSET_MODE_ENABLED=ON -DCUSTOM_SET_
 cmake --build build
 ./build/rb_tree < tests/end2end/small_input.txt
 ```
-Программа выводит графическое представление красно-чёрного дерева с помощью [!Graphviz](/graphviz/tree_graph.png). 
+Программа создает текстовое представление 'dot' вашего красно-чёрного дерева с помощью [!Graphviz](/graphviz/file_graph.dot).
+
+Eсли выхотите сгенирировать PNG (графическое представление красно-черного дерева):
+
+```bash
+python3 scripts/render_dot.py graphviz/file_graph.dot graphviz/tree.png
+```
+где `tree.png` - название вашей PNG
 
 # Тесты
 

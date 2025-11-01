@@ -288,19 +288,6 @@ public:
         return counter;
     }
 
-    Red_black_tree& operator=(Red_black_tree&& other) noexcept
-    {
-        if (this != &other)
-        {
-            destroy_subtree(root_);
-
-            root_ = other.root_;
-                    other.root_ = nullptr;
-        }
-
-        return *this;
-    }
-
 
 private:
     void search(const Node<KeyT>* node, uint64_t& counter, const KeyT& key1, const KeyT& key2) const

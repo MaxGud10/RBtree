@@ -124,17 +124,6 @@ class Red_black_tree
         root_->color = Color::black;
     }
 
-    void fix_insert_without_rotate(std::shared_ptr<Node<KeyT>> node, 
-                                   std::shared_ptr<Node<KeyT>> uncle) 
-    {
-        node->parent_->color = Color::black;
-        if (uncle) 
-            uncle->color     = Color::black;
-
-        node->parent_->parent_->color = Color::red;
-        node                          = node->parent_->parent_;
-    }
-
     void left_rotate(Node<KeyT>* pivot_node)
     {
         if (!pivot_node) 
@@ -195,6 +184,16 @@ class Red_black_tree
                            pivot_node->parent_ = new_root;
     }
 
+    static void destroy_subtree(Node<KeyT>* node) noexcept
+    {
+        if (!node) 
+            return;
+        destroy_subtree(node->left_);
+        destroy_subtree(node->right_);
+
+        delete node;
+    }
+
 // TODO: может быть потом написать свой метод distanse 
 
 public:
@@ -205,8 +204,33 @@ public:
         root_ = new Node<KeyT> (key, Color::black);
     }
 
+    ~Red_black_tree()
+    {
+        destroy_subtree(root_);
+        root_ = nullptr;
+    }
+
     Red_black_tree(const Red_black_tree&)            = delete;
     Red_black_tree& operator=(const Red_black_tree&) = delete;
+
+
+    Red_black_tree(Red_black_tree&& other) : root_(other.root_)
+    {
+        other.root_ = nullptr;
+    }
+
+    Red_black_tree& operator=(Red_black_tree&& other) 
+    {
+        if (this != &other)
+        {
+            destroy_subtree(root_);
+
+            root_ = other.root_;
+                    other.root_ = nullptr;
+        }
+
+        return *this;
+    }
 
     const Node<KeyT>* get_root() const { return root_; }
 
@@ -279,7 +303,7 @@ public:
 
 
 private:
-    void search(Node<KeyT>* node, uint64_t& counter, const KeyT& key1, const KeyT& key2) const
+    void search(const Node<KeyT>* node, uint64_t& counter, const KeyT& key1, const KeyT& key2) const
     {
         if (!node) 
             return;

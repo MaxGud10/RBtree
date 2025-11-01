@@ -2,11 +2,12 @@
 
 #include <fstream>
 #include <sstream>
-#include <cstdlib>     
+#include <cstdlib>
 #include <filesystem>
 #include <string>
+#include <iostream>
 
-#include "red_black_tree.hpp" 
+#include "red_black_tree.hpp"
 
 namespace Tree
 {
@@ -26,10 +27,10 @@ class Print_tree
         return rc == 0;
     }
 
-    mutable std::size_t nil_counter_ = 0; // уникальные имена для NULL-листьев
-
-    // рисует один узел (для Graphviz .dot)
-    void emit_node_(const Tree::Node<KeyT>& node, std::ofstream& out, bool is_root) const 
+    // pисует один узел (для Graphviz .dot)
+    void emit_node_(const Tree::Node<KeyT>& node,
+                    std::ofstream& out,
+                    bool is_root) const 
     {
         const char* fill = is_root ? "#5A5A5A"
                                    : (node.color == Tree::Color::red ? "#D85C5C" : "#BDBDBD");
@@ -37,13 +38,14 @@ class Print_tree
 
         std::ostringstream parent_ss, left_ss, right_ss;
 
-        if (auto parent_locked = node.parent_.lock()) 
-            parent_ss << parent_locked->key_; 
-        else 
-            parent_ss << "NIL";
+        if (node.parent_) parent_ss << node.parent_->key_;
+        else              parent_ss << "NIL";
 
-        if (node.left_ ) left_ss  << node.left_->key_;   else left_ss   << "NIL";
-        if (node.right_) right_ss << node.right_->key_;  else right_ss  << "NIL";
+        if (node.left_)   left_ss  << node.left_->key_;
+        else              left_ss  << "NIL";
+
+        if (node.right_)  right_ss << node.right_->key_;
+        else              right_ss << "NIL";
 
         out << node.key_
             << " [shape=Mrecord, style=filled, fillcolor=\"" << fill
@@ -110,7 +112,7 @@ public:
 
         if (auto root = rb_tree.get_root()) 
         {
-            std::size_t nil_counter = 0;
+            std::size_t nil_counter = 0; 
             print_(*root, out, nil_counter, true);
         } 
         else 
@@ -121,7 +123,7 @@ public:
         out << "}\n";
         out.close();
 
-        // генерируем PNG только если утставнолен Graphviz
+        // Генерация png
         if (!command_exists("dot"))
         {
             std::cerr << "[WARN] Graphviz (dot) not found in PATH. PNG won't be generated.\n"
@@ -138,7 +140,6 @@ public:
         if (!auto_open)
             return;
 
-        // авто-открытие png (проверяем доступность команды на posix; на windows 'start' доступен)
     #ifdef _WIN32
         std::string open_cmd = "start \"\" \"" + png_path + "\"";
         (void)std::system(open_cmd.c_str());
@@ -150,7 +151,7 @@ public:
         }
         else
         {
-            std::cerr << "WARN 'open' not found. Please open \"" << png_path << "\" manually.\n";
+            std::cerr << "[WARN] 'open' not found. Please open \"" << png_path << "\" manually.\n";
         }
     #else
         if (command_exists("xdg-open"))
@@ -160,11 +161,10 @@ public:
         }
         else
         {
-            std::cerr << "WARN 'xdg-open' not found. Please open \"" << png_path << "\" manually.\n";
+            std::cerr << "[WARN] 'xdg-open' not found. Please open \"" << png_path << "\" manually.\n";
         }
     #endif
     }
-    
 };
 
 } // namespace Tree

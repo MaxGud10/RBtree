@@ -23,11 +23,14 @@ constexpr RunMode kRunMode = RunMode::AlgoOnly;
           : RunMode::VerifyWithSet;
 #endif
 
+// TODO сделать define через цифры и передавать и в cmake как параметры 
 
 static int64_t range_queries_set(const std::set<int64_t>& set, int64_t a, int64_t b);
 static void run_normal(bool verify_with_set);
 static void run_bench_both();
 
+// TODO: через командную строчку передавать файл куда 
+// записывать файл с dot и потом скриптом на питоне запускать сам dot и генерировать png
 int main() 
 {
     if constexpr (kRunMode == RunMode::BenchBoth) 

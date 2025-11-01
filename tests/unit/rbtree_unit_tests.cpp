@@ -5,17 +5,17 @@
 using Key = int64_t;
 
 template <class KeyT>
-static int CheckRB(const std::shared_ptr<Tree::Node<KeyT>>& n) 
+static int CheckRB(const Tree::Node<KeyT>* n) 
 {
     if (!n) return 1; 
 
     if (n->color == Tree::Color::red) 
     {
-        if (n->left_)  EXPECT_EQ(n->left_->color,  Tree::Color::black);
+        if (n->left_ ) EXPECT_EQ(n->left_->color,  Tree::Color::black);
         if (n->right_) EXPECT_EQ(n->right_->color, Tree::Color::black);
     }
 
-    int lh = CheckRB(n->left_);
+    int lh = CheckRB(n->left_ );
     int rh = CheckRB(n->right_);
     EXPECT_EQ(lh, rh) << "black-height mismatch";
 
@@ -58,7 +58,7 @@ TEST(RBTreeUnit, RBInvariantsAfterInsert) {
     for (Key x : {10, 20, 30, 15, 25, 5, 1, 50, 60, 55, 54})
         t.insert_elem(x);
 
-    auto root = std::const_pointer_cast<Tree::Node<Key>>(t.get_root());
+    auto root = t.get_root();
     ASSERT_TRUE(root);
     EXPECT_EQ(root->color, Tree::Color::black);
     (void)CheckRB(root);

@@ -138,48 +138,6 @@ public:
                       << "INFO: graphviz 'dot' is available. To render PNG via Python:\n"
                       << "       python3 scripts/render_dot.py \"" << dot_path << "\" graphviz/tree.png\n";
         }
-
-        // Генерация png
-    //     if (!command_exists("dot"))
-    //     {
-    //         std::cerr << "[WARN] Graphviz (dot) not found in PATH. PNG won't be generated.\n"
-    //                   << "       You can install graphviz and run:\n"
-    //                   << "       dot -Tpng \"" << dot_path << "\" -o \"" << png_path << "\"\n";
-    //         return;
-    //     }
-
-    //     {
-    //         std::string cmd = "dot -Tpng \"" + dot_path + "\" -o \"" + png_path + "\"";
-    //         (void)std::system(cmd.c_str());
-    //     }
-
-    //     if (!auto_open)
-    //         return;
-
-    // #ifdef _WIN32
-    //     std::string open_cmd = "start \"\" \"" + png_path + "\"";
-    //     (void)std::system(open_cmd.c_str());
-    // #elif defined(__APPLE__)
-    //     if (command_exists("open"))
-    //     {
-    //         std::string open_cmd = "open \"" + png_path + "\"";
-    //         (void)std::system(open_cmd.c_str());
-    //     }
-    //     else
-    //     {
-    //         std::cerr << "[WARN] 'open' not found. Please open \"" << png_path << "\" manually.\n";
-    //     }
-    // #else
-    //     if (command_exists("xdg-open"))
-    //     {
-    //         std::string open_cmd = "xdg-open \"" + png_path + "\"";
-    //         (void)std::system(open_cmd.c_str());
-    //     }
-    //     else
-    //     {
-    //         std::cerr << "[WARN] 'xdg-open' not found. Please open \"" << png_path << "\" manually.\n";
-    //     }
-    // #endif
     }
 };
 

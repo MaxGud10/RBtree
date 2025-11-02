@@ -47,16 +47,17 @@ q 10 20
 
 | Режим | Что собрать / какие флаги | Как запустить | Примечания |
 |---|---|---|---|
-| **Обычный** | `cmake -S . -B build -DSET_MODE_ENABLED=OFF` | `./build/rb_tree < tests/end2end/small_input.txt` | Только наше дерево, печатает ответы. |
-| **Проверка ответов** | `cmake -S . -B build -DSET_MODE_ENABLED=ON` | `./build/rb_tree < tests/end2end/small_input.txt` | Параллельно считает через `std::set`, расхождения выводит в `stderr`. |
-| **Бенчмарк** | (без флагов) | `./build/rb_tree_bench < tests/end2end/big_input.txt 1>/dev/null` | Отдельный бинарь. Усреднение по батчам, настраивается `--bench-batch=N` (по умолчанию 2000). |
-| **Графвиз-дамп** | см. ниже | см. ниже | Дамп включается компиляторным дефайном `CUSTOM_MODE_DEBUG`. |
+| **Обычный** | `cmake -S . -B build -DSET_MODE_ENABLED=OFF` | `./build/rb_tree < tests/end2end/small_input.txt` | Только наше дерево, выводит ответы. |
+| **Проверка ответов** | `cmake -S . -B build -DSET_MODE_ENABLED=ON` | `./build/rb_tree < tests/end2end/small_input.txt` | Параллельно проверяет ответы через `std::set`, расхождения выводит в `stderr`. |
+| **Бенчмарк** | (без флагов) | `./build/rb_tree_bench < tests/end2end/big_input.txt 1>/dev/null` | Отдельный бинарь для замеров. Усреднение по батчам, параметр `--bench-batch=N` (по умолчанию 2000). |
+| **Graphviz-дамп** | `cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug`<br>или `-DRBTREE_DEBUG_DOT=ON` | `./build/rb_tree --gv-file=graphviz/my_tree.dot < tests/end2end/small_input.txt` | Автоматически включён в Debug. Можно включить вручную флагом `RBTREE_DEBUG_DOT`. Поддерживает `--gv-file=<путь>` и `--gv-prefix=<префикс>` для задания имён файлов. |
+
 
 -----------------------------------------
 
 Создаются два бинарных файла 
 - `rb_tree` читает команды из stdin (k X, q A B), отвечает на запросы.
-Если собрать с флагом -DSET_MODE_ENABLED=ON, дополнительно проверяет ответы через `std::set` и пишет расхождения в stderr
+Если собрать с флагом `-DSET_MODE_ENABLED=ON`, дополнительно проверяет ответы через `std::set` и пишет расхождения в stderr
 - `rb_tree_bench` читает тот же формат входа, меряет время вставок/запросов для твоего дерева и (при SET_MODE_ENABLED для этого бинарника — он уже включён в CMake) для `std::set`. Усредняет по батчам.
 
 ### Зависимости
@@ -111,14 +112,14 @@ cmake --build build
 ./build/rb_tree --gv-file=graphviz/file_graph.dot < tests/end2end/small_input.txt
 ```
 
-Программа создает текстовое представление `dot` вашего красно-чёрного дерева с помощью [!Graphviz](/graphviz/file_graph.dot).
+Программа создает текстовое представление `dot` вашего красно-чёрного дерева с помощью [!Graphviz](graphviz/file_graph.dot).
 
 По умолчанию создаётся файл
 `graphviz/file_graph.dot`
 
 `Пользовательские имена файлов `
 
-Вы можете свои имена прямо при запуске:
+Вы можете создать свои имена прямо при запуске:
 
 | Аргумент | Что делает | Пример |
 |-----------|-------------|--------|
@@ -154,7 +155,7 @@ python3 scripts/render_dot.py graphviz/file_graph.dot graphviz/tree.png
 
 Так же графический dump можно включить в любой конфигурации
 <details>
-<summary>Расверни</summary>
+<summary>Разверни</summary>
 
 - `Включить дамп в любой конфигурации (например: Release)`
 ```bash

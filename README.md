@@ -44,16 +44,20 @@ q 10 20
 
 ## Режимы работы
 
- проекте реализовано несколько режимов, включаемых через параметры **CMake**.
 
-| Режим | Флаги CMake | Назначение |
-|:------|:-------------|:-----------|
-| **Основной режим** (по умолчанию) | `-DSET_MODE_ENABLED=OFF` | Работает только дерево, выводит ответы. |
-| **Проверки** | `-DSET_MODE_ENABLED=ON -DCUSTOM_SET_VALUE=VERIFY` | Дополнительно сверяет ответы с `std::set`, выводит расхождения в `stderr`. |
-| **Замера времени** | `-DSET_MODE_ENABLED=ON -DCUSTOM_SET_VALUE=BENCH` | Измеряет время выполнения операций для дерева и `std::set` и выводит сводку. |
-| **Debug** | `-DSET_MODE_ENABLED=ON -DCUSTOM_SET_VALUE=DEBUG -DCMAKE_BUILD_TYPE=Debug` | После выполнения создаёт графическое представление дерева (`graphviz/tree_graph.png`). |
+| Режим | Что собрать / какие флаги | Как запустить | Примечания |
+|---|---|---|---|
+| **Обычный** | `cmake -S . -B build -DSET_MODE_ENABLED=OFF` | `./build/rb_tree < tests/end2end/small_input.txt` | Только наше дерево, печатает ответы. |
+| **Проверка ответов** | `cmake -S . -B build -DSET_MODE_ENABLED=ON` | `./build/rb_tree < tests/end2end/small_input.txt` | Параллельно считает через `std::set`, расхождения выводит в `stderr`. |
+| **Бенчмарк** | (без флагов) | `./build/rb_tree_bench < tests/end2end/big_input.txt 1>/dev/null` | Отдельный бинарь. Усреднение по батчам, настраивается `--bench-batch=N` (по умолчанию 2000). |
+| **Графвиз-дамп** | см. ниже | см. ниже | Дамп включается компиляторным дефайном `CUSTOM_MODE_DEBUG`. |
 
 -----------------------------------------
+
+Создаются два бинарных файла 
+- `rb_tree` читает команды из stdin (k X, q A B), отвечает на запросы.
+Если собрать с флагом -DSET_MODE_ENABLED=ON, дополнительно проверяет ответы через `std::set` и пишет расхождения в stderr
+- `rb_tree_bench` читает тот же формат входа, меряет время вставок/запросов для твоего дерева и (при SET_MODE_ENABLED для этого бинарника — он уже включён в CMake) для `std::set`. Усредняет по батчам.
 
 ### Зависимости
 
@@ -78,9 +82,9 @@ cmake --build build
 
 ```
 
-- `Режим проверки`
+- `Режим проверки с std::set`
 ```bash
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DSET_MODE_ENABLED=ON -DCUSTOM_SET_VALUE=VERIFY
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DSET_MODE_ENABLED=ON
 cmake --build build
 ./build/rb_tree < tests/end2end/small_input.txt
 
@@ -90,25 +94,75 @@ cmake --build build
 
 - `Режим замера времени`
 ```bash
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DSET_MODE_ENABLED=ON -DCUSTOM_SET_VALUE=BENCH
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build
-./build/rb_tree < tests/end2end/big_input.txt 1>/dev/null
+./build/rb_tree_bench < tests/end2end/big_input.txt 1>/dev/null
+# Дополнительно можно задать размер батча:
+# ./build/rb_tree_bench --bench-batch=5000 < tests/end2end/big_input.txt 1>/dev/null
 ```
 
 - `Debug`
+
+При сборке в Debug (`-DCMAKE_BUILD_TYPE=Debug`) бинарь rb_tree автоматически создает `.dot`- файл с описанием деререва, который можно потом визуализировать через `Graphviz`.
+
 ```bash
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DSET_MODE_ENABLED=ON -DCUSTOM_SET_VALUE=DEBUG
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DSET_MODE_ENABLED=ON
 cmake --build build
-./build/rb_tree < tests/end2end/small_input.txt
+./build/rb_tree --gv-file=graphviz/file_graph.dot < tests/end2end/small_input.txt
 ```
-Программа создает текстовое представление 'dot' вашего красно-чёрного дерева с помощью [!Graphviz](/graphviz/file_graph.dot).
+
+Программа создает текстовое представление `dot` вашего красно-чёрного дерева с помощью [!Graphviz](/graphviz/file_graph.dot).
+
+По умолчанию создаётся файл
+`graphviz/file_graph.dot`
+
+`Пользовательские имена файлов `
+
+Вы можете свои имена прямо при запуске:
+
+| Аргумент | Что делает | Пример |
+|-----------|-------------|--------|
+| `--gv-file=<путь>` | Указывает полное имя `.dot`-файла. | `./rb_tree --gv-file=my_tree.dot < input.txt` |
+| `--gv-prefix=<префикс>` | Задаёт префикс, к которому добавится `_tree.dot`. | `./rb_tree --gv-prefix=run01 < input.txt` создаст `run01_tree.dot` |
+
+<details>
+<summary>Примеры:</summary>
+
+### Примеры использования
+
+#### 1. Полный путь к .dot-файлу
+```bash
+./build/rb_tree --gv-file=graphviz/custom_tree.dot < tests/end2end/small_input.txt
+# создаст файл graphviz/custom_tree.dot
+```
+
+#### 2. Префикс имени (создаётся автоматически _tree.dot)
+```bash
+./build/rb_tree --gv-prefix=run01 < tests/end2end/small_input.txt
+# создаст run01_tree.dot
+```
+
+</details>
 
 Eсли выхотите сгенирировать PNG (графическое представление красно-черного дерева):
 
 ```bash
 python3 scripts/render_dot.py graphviz/file_graph.dot graphviz/tree.png
 ```
-где `tree.png` - название вашей PNG
+
+где `tree.png` - название вашей PNG, a `file_graph.dot` - файл с текстовым представлением дерева
+
+Так же графический dump можно включить в любой конфигурации
+<details>
+<summary>Расверни</summary>
+
+- `Включить дамп в любой конфигурации (например: Release)`
+```bash
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DRBTREE_DEBUG_DOT=ON -DSET_MODE_ENABLED=ON
+cmake --build build
+```
+
+</details>
 
 # Тесты
 
@@ -146,7 +200,7 @@ build/tests/rbtree_unit_tests
 ![dump](/graphviz/tree_graph.png)
 
 
-Так же если вам интересно узнать кто же все-так быстрее 
+<!-- Так же если вам интересно узнать кто же все-так быстрее 
 <details>
 
 ## Сравнение производительности
@@ -175,4 +229,4 @@ build/tests/rbtree_unit_tests
 | 3 000 | 16 104 091 | 17 051 500 |
 | 3 500 | 25 133 257 | 26 463 580 |
 | 5 000 | 75 006 971 | 79 750 321 |
-</details>
+</details> -->

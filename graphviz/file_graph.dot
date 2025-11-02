@@ -1,0 +1,24 @@
+digraph RB_tree {
+label = < Red-black tree >;
+bgcolor = "#BAF0EC";
+rankdir=TB;
+node  [shape=record, style=filled];
+edge  [color=black, arrowsize=0.8];
+20 [shape=Mrecord, style=filled, fillcolor="#5A5A5A", fontcolor="white", label="{ key: 20 | parent: NIL | { L: 10 | R: 30 } }" ];
+20 -> 10;
+10 [shape=Mrecord, style=filled, fillcolor="#BDBDBD", fontcolor="black", label="{ key: 10 | parent: 20 | { L: NIL | R: NIL } }" ];
+nilL_0 [shape=box, style=filled, fillcolor="#BDBDBD", label="NULL"];
+10 -> nilL_0;
+nilR_1 [shape=box, style=filled, fillcolor="#BDBDBD", label="NULL"];
+10 -> nilR_1;
+20 -> 30;
+30 [shape=Mrecord, style=filled, fillcolor="#BDBDBD", fontcolor="black", label="{ key: 30 | parent: 20 | { L: NIL | R: 40 } }" ];
+nilL_2 [shape=box, style=filled, fillcolor="#BDBDBD", label="NULL"];
+30 -> nilL_2;
+30 -> 40;
+40 [shape=Mrecord, style=filled, fillcolor="#D85C5C", fontcolor="black", label="{ key: 40 | parent: 30 | { L: NIL | R: NIL } }" ];
+nilL_3 [shape=box, style=filled, fillcolor="#BDBDBD", label="NULL"];
+40 -> nilL_3;
+nilR_4 [shape=box, style=filled, fillcolor="#BDBDBD", label="NULL"];
+40 -> nilR_4;
+}

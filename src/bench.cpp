@@ -97,7 +97,7 @@ int main(int argc, char** argv)
                 }
 
                 start_if_first(our_ins_in_batch, our_ins_t0);
-                range_quer.rb_tree.insert_elem(key);
+                range_quer.add_element(key);
                 close_if_full(our_ins_in_batch, our_insert_time, our_ins_t0);
 
 #ifdef SET_MODE_ENABLED

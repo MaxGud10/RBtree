@@ -101,7 +101,7 @@ static inline void verify_query(const std::set<int64_t>& set, int64_t a, int64_t
 #endif
 
 
-static void run_normal(bool verify_with_set, int /*argc*/, char** argv)
+static void run_normal(bool verify_with_set, int argc, char** argv)
 {
     std::ios::sync_with_stdio(false);
     std::cin.tie(nullptr);
@@ -121,7 +121,7 @@ static void run_normal(bool verify_with_set, int /*argc*/, char** argv)
     {
         if (mode == 'k') 
         {
-            range_quer.rb_tree.insert_elem(a);
+            range_quer.add_element(a);
 #ifdef SET_MODE_ENABLED
             if (verify_with_set) set.insert(a);
 #endif
@@ -143,9 +143,9 @@ static void run_normal(bool verify_with_set, int /*argc*/, char** argv)
 
 #ifdef CUSTOM_MODE_DEBUG
     {
-        const std::string dot_name = get_gv_file_arg(/*argc=*/0, argv, "graphviz/file_graph.dot");
+        const std::string dot_name = get_gv_file_arg(argc, argv, "graphviz/file_graph.dot");
         Tree::Print_tree<int64_t> pr_tr;
-        pr_tr.dump(range_quer.rb_tree, dot_name.c_str(), "graphviz/tree_graph.png", true);
+        pr_tr.dump(range_quer.get_tree(), dot_name.c_str(), "graphviz/tree_graph.png", true);
     }
 #endif
 }

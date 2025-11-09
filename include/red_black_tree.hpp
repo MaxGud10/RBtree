@@ -4,6 +4,7 @@
 #include <fstream>   
 #include <sstream>  
 #include <cstdlib>  
+#include <utility>
 #include <filesystem>
 
 namespace Tree
@@ -214,10 +215,7 @@ public:
     Red_black_tree& operator=(const Red_black_tree&) = delete;
 
 
-    Red_black_tree(Red_black_tree&& other) : root_(other.root_)
-    {
-        other.root_ = nullptr;
-    }
+    Red_black_tree(Red_black_tree&& other) : root_(std::exchange(other.root_, nullptr)) {}
 
     Red_black_tree& operator=(Red_black_tree&& other) 
     {
@@ -225,8 +223,9 @@ public:
         {
             destroy_subtree(root_);
 
-            root_ = other.root_;
-                    other.root_ = nullptr;
+            root_ = std::exchange(other.root_, nullptr);
+            // root_ = other.root_;
+            //         other.root_ = nullptr;
         }
 
         return *this;
@@ -330,8 +329,15 @@ namespace RangeQueries
 template<typename KeyT>
 class Range_queries 
 {
-public:
     Tree::Red_black_tree<KeyT> rb_tree;
+
+public:
+    const Tree::Red_black_tree<KeyT>& get_tree() const {return rb_tree;}
+
+    void add_element(const KeyT& key)
+    {
+        rb_tree.insert_elem(key);
+    }
 
     void add_element(std::istream& in) 
     {

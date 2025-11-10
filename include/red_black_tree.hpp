@@ -6,6 +6,15 @@
 #include <cstdlib>  
 #include <utility>
 #include <filesystem>
+#include <iterator>
+
+#include "rb_iterator.hpp"
+
+
+// TODO: исправить баг 
+// TODO: посмотреть где можно убрать касты 
+// TODO: исправить cmake так чтобы надо было проверка на скаченную библиотеку 
+// TODO: мб придется переписать readme 
 
 namespace Tree
 {
@@ -189,6 +198,7 @@ class Red_black_tree
     {
         if (!node) 
             return;
+
         destroy_subtree(node->left_);
         destroy_subtree(node->right_);
 
@@ -198,6 +208,14 @@ class Red_black_tree
 // TODO: может быть потом написать свой метод distanse 
 
 public:
+    using iterator = RB_Iterator<KeyT>;
+
+    // using iterator_category = std::bidirectional_iterator_tag;
+    // using value_type        = KeyT;
+    // using difference_type   = std::ptrdiff_t;
+    // using pointer           = const KeyT*;
+    // using reference         = const KeyT&;
+
     Red_black_tree() = default;
 
     Red_black_tree(KeyT key) 
@@ -278,13 +296,42 @@ public:
         fix_insert(new_node); // балансировка 
     }
 
+    iterator begin() const 
+    {
+        Node<KeyT>* node = root_;
+        if (!node)
+            return iterator(nullptr);
+
+        while (node->left_)
+            node = node->left_;
+
+        return iterator(node);
+    }
+
+    iterator end() const
+    {
+        return iterator(nullptr);
+    }
+
+    // uint64_t range_queries(const KeyT key1, const KeyT key2) const 
+    // { 
+    //     uint64_t counter = 0;
+
+    //     search(root_, counter, key1, key2);
+
+    //     return counter;
+    // }
+
     uint64_t range_queries(const KeyT key1, const KeyT key2) const 
     { 
-        uint64_t counter = 0;
+        if (key2 < key1)
+            return 0;
 
-        search(root_, counter, key1, key2);
+        auto first = lower_bound(key1);
+        auto last  = upper_bound(key2);
 
-        return counter;
+        return my_distance(first, last); // std::dist 
+        // return std::distance(first, last);
     }
 
 
@@ -317,6 +364,59 @@ private:
                 search(node->left_,  counter, key1, key2);
         }
     }
+
+    Node<KeyT>* lower_bound_node(const KeyT& key) const
+    {
+        Node<KeyT>* cur = root_;
+        Node<KeyT>* res = nullptr;
+
+        while (cur)
+        {
+            if (!(cur->key_ < key)) // key <= cur->key_
+            {
+                res = cur;
+                cur = cur->left_;
+            }
+
+            else
+                cur = cur->right_;
+        }
+
+        return res;
+    }
+
+    Node<KeyT>* upper_bound_node(const KeyT& key) const
+    {
+        Node<KeyT>* cur = root_;
+        Node<KeyT>* res = nullptr;
+
+        while (cur)
+        {
+            if (key < cur->key_) // cur->key_ > key
+            {
+                res = cur;
+                cur = cur->left_;
+            }
+
+            else
+                cur = cur->right_;
+        }
+
+        return res;
+    }
+
+public:
+    iterator lower_bound(const KeyT& key) const
+    {
+        return iterator(lower_bound_node(key));
+    }
+
+    iterator upper_bound(const KeyT& key) const
+    {
+        return iterator(upper_bound_node(key));
+    }
+
+
 };
 
 }; // namespace Tree

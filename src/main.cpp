@@ -3,6 +3,7 @@
 #include <set>
 #include <string>
 #include <string_view>
+#include "cxxopts.hpp"
 
 #include "red_black_tree.hpp"
 #include "graphic_dump.hpp"
@@ -14,21 +15,48 @@ constexpr bool kVerifyWithSet = true;
 constexpr bool kVerifyWithSet = false;
 #endif
 
-static std::string get_gv_file_arg(int argc, char** argv, const char* def_name) 
-{
-    std::string prefix;
-    for (int i = 1; i < argc; ++i) 
-    {
-        std::string_view a = argv[i];
-        if (a.rfind("--gv-file=", 0) == 0) 
-            return std::string(a.substr(10));
+// TODO: исправть README
 
-        if (a.rfind("--gv-prefix=", 0) == 0) 
-            prefix = std::string(a.substr(12));
+// TODo: nix 
+// static std::string get_gv_file_arg(int argc, char** argv, const char* def_name) 
+// {
+//     std::string prefix;
+//     for (int i = 1; i < argc; ++i) 
+//     {
+//         std::string_view a = argv[i];
+//         if (a.rfind("--gv-file=", 0) == 0) 
+//             return std::string(a.substr(10));
+
+//         if (a.rfind("--gv-prefix=", 0) == 0) 
+//             prefix = std::string(a.substr(12));
+//     }
+
+//     if (!prefix.empty()) 
+//         return prefix + "_tree.dot";
+
+//     return def_name;
+// }
+
+static std::string get_gv_file_arg(int argc, char** argv, const char* def_name)
+{
+    cxxopts::Options options("rb_tree", "Red-black tree visualizer");
+    options.add_options()
+        ("f,gv-file",   "Path to .dot output file", cxxopts::value<std::string>())
+        ("p,gv-prefix", "Prefix for .dot file name", cxxopts::value<std::string>())
+        ("h,help",      "Print help");
+
+    auto result = options.parse(argc, argv);
+
+    if (result.count("help")) {
+        std::cout << options.help() << std::endl;
+        std::exit(0);
     }
 
-    if (!prefix.empty()) 
-        return prefix + "_tree.dot";
+    if (result.count("gv-file"))
+        return result["gv-file"].as<std::string>();
+
+    if (result.count("gv-prefix"))
+        return result["gv-prefix"].as<std::string>() + "_tree.dot";
 
     return def_name;
 }

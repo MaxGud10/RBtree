@@ -11,10 +11,10 @@
 #include "rb_iterator.hpp"
 
 
-// TODO: исправить баг 
 // TODO: посмотреть где можно убрать касты 
-// TODO: исправить cmake так чтобы надо было проверка на скаченную библиотеку 
-// TODO: мб придется переписать readme 
+////TODO: мб придется переписать readme 
+
+
 
 namespace Tree
 {
@@ -205,16 +205,8 @@ class Red_black_tree
         delete node;
     }
 
-// TODO: может быть потом написать свой метод distanse 
-
 public:
     using iterator = RB_Iterator<KeyT>;
-
-    // using iterator_category = std::bidirectional_iterator_tag;
-    // using value_type        = KeyT;
-    // using difference_type   = std::ptrdiff_t;
-    // using pointer           = const KeyT*;
-    // using reference         = const KeyT&;
 
     Red_black_tree() = default;
 
@@ -242,8 +234,6 @@ public:
             destroy_subtree(root_);
 
             root_ = std::exchange(other.root_, nullptr);
-            // root_ = other.root_;
-            //         other.root_ = nullptr;
         }
 
         return *this;
@@ -313,15 +303,6 @@ public:
         return iterator(nullptr);
     }
 
-    // uint64_t range_queries(const KeyT key1, const KeyT key2) const 
-    // { 
-    //     uint64_t counter = 0;
-
-    //     search(root_, counter, key1, key2);
-
-    //     return counter;
-    // }
-
     uint64_t range_queries(const KeyT key1, const KeyT key2) const 
     { 
         if (key2 < key1)
@@ -330,8 +311,7 @@ public:
         auto first = lower_bound(key1);
         auto last  = upper_bound(key2);
 
-        return my_distance(first, last); // std::dist 
-        // return std::distance(first, last);
+        return std::distance(first, last);
     }
 
 

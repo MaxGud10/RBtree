@@ -118,8 +118,6 @@ int main(int argc, char** argv)
                     return 1;
                 }
 
-                if (a > b) 
-                    std::swap(a, b);
 
                 start_if_first(our_qry_in_batch, our_qry_t0);
                 const auto ans = range_quer.find_range_elements(a, b);

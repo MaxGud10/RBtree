@@ -36,6 +36,12 @@ class RB_Iterator
     }
 
 public:
+    using iterator_category = std::bidirectional_iterator_tag;
+    using value_type        = KeyT;
+    using difference_type   = std::ptrdiff_t;
+    using pointer           = const KeyT*;
+    using reference         = const KeyT&;
+
              RB_Iterator() = default;
     explicit RB_Iterator(Node<KeyT>* node) : node_(node) {}
 
@@ -94,16 +100,5 @@ public:
 
     Node<KeyT>* get_node() const { return node_; }
 };
-
-// TODO: если std:dist будет норм работать, то закоментить
-template <typename It>
-std::size_t my_distance(It first, It last)
-{
-    std::size_t cnt = 0;
-    for (; first != last; ++first)
-        ++cnt;
-
-    return cnt;
-}
 
 } // namespace Tree

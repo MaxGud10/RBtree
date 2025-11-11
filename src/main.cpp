@@ -18,24 +18,6 @@ constexpr bool kVerifyWithSet = false;
 // TODO: исправть README
 
 // TODo: nix 
-// static std::string get_gv_file_arg(int argc, char** argv, const char* def_name) 
-// {
-//     std::string prefix;
-//     for (int i = 1; i < argc; ++i) 
-//     {
-//         std::string_view a = argv[i];
-//         if (a.rfind("--gv-file=", 0) == 0) 
-//             return std::string(a.substr(10));
-
-//         if (a.rfind("--gv-prefix=", 0) == 0) 
-//             prefix = std::string(a.substr(12));
-//     }
-
-//     if (!prefix.empty()) 
-//         return prefix + "_tree.dot";
-
-//     return def_name;
-// }
 
 static std::string get_gv_file_arg(int argc, char** argv, const char* def_name)
 {
@@ -104,9 +86,6 @@ static bool read_next(std::istream& in, char& mode, int64_t& a, int64_t& b)
             std::cerr << "ERROR: expected two numbers after 'q'\n";
             return false;
         }
-
-        if (a > b) 
-            std::swap(a, b);
 
         return true;
     }

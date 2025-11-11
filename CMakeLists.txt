@@ -4,6 +4,22 @@ project(RBtree LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+find_path(CXXOPTS_INCLUDE_DIR cxxopts.hpp
+  HINTS ${CMAKE_SOURCE_DIR}/include /usr/include /usr/local/include
+)
+
+if (NOT CXXOPTS_INCLUDE_DIR)
+  message(FATAL_ERROR
+    "Library not found 'cxxopts.hpp'.\n"
+    "Download it manually:\n"
+    "  git clone https://github.com/jarro2783/cxxopts\n"
+    "  and add the include-folder to the project:\n"
+    "  cp cxxopts/include/cxxopts.hpp ${CMAKE_SOURCE_DIR}/include/\n"
+  )
+else()
+  message(STATUS "Find cxxopts.hpp: ${CXXOPTS_INCLUDE_DIR}")
+endif()
+
 
 option(SET_MODE_ENABLED "Enable SET verification in rb_tree" OFF)
 option(RBTREE_DEBUG_DOT "Dump Graphviz (CUSTOM_MODE_DEBUG)" OFF)

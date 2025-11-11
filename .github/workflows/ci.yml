@@ -20,11 +20,11 @@ jobs:
           - name: Release (SET_MODE_ENABLED=OFF)
             build_type: Release
             set_mode: OFF
-            custom_set: ""
-          - name: Debug (SET_MODE_ENABLED=ON, CUSTOM_SET_VALUE=DEBUG)
+            debug_dot: OFF
+          - name: Debug (SET_MODE_ENABLED=ON, RBTREE_DEBUG_DOT=ON)
             build_type: Debug
             set_mode: ON
-            custom_set: DEBUG
+            debug_dot: ON
 
     steps:
       - name: Checkout
@@ -41,13 +41,24 @@ jobs:
           sudo make
           sudo mv lib/libgtest*.a /usr/lib/
 
-      - name: Configure (CMake)
+      - name: Ensure cxxopts.hpp is available
+        run: |
+          mkdir -p include
+          if [ ! -f include/cxxopts.hpp ]; then
+            echo "cxxopts.hpp not found in include/, downloading..."
+            curl -L https://raw.githubusercontent.com/jarro2783/cxxopts/master/include/cxxopts.hpp \
+              -o include/cxxopts.hpp
+          else
+            echo "cxxopts.hpp already present in include/"
+          fi
+
+      - name: Configure (CMake) - ${{ matrix.config.name }}
         run: |
           cmake -S . -B build \
             -G Ninja \
             -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }} \
             -DSET_MODE_ENABLED=${{ matrix.config.set_mode }} \
-            $([ -n "${{ matrix.config.custom_set }}" ] && echo -DCUSTOM_SET_VALUE=${{ matrix.config.custom_set }})
+            -DRBTREE_DEBUG_DOT=${{ matrix.config.debug_dot }}
 
       - name: Build
         run: cmake --build build --config ${{ matrix.config.build_type }} -- -k 0
@@ -57,6 +68,15 @@ jobs:
         env:
           CTEST_OUTPUT_ON_FAILURE: 1
         run: ctest -C ${{ matrix.config.build_type }} --output-on-failure
+
+      - name: Run rb_tree with Graphviz dump (Debug only)
+        if: ${{ matrix.config.build_type == 'Debug' }}
+        run: |
+          ./build/rb_tree --gv-file=graphviz/ci_tree.dot < tests/end2end/small_input.txt
+          if [ ! -f graphviz/ci_tree.dot ]; then
+            echo "ERROR: graphviz/ci_tree.dot was not created"
+            exit 1
+          fi
 
       - name: Upload Graphviz artifacts (if present)
         uses: actions/upload-artifact@v4

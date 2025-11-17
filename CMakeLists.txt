@@ -5,7 +5,10 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_path(CXXOPTS_INCLUDE_DIR cxxopts.hpp
-  HINTS ${CMAKE_SOURCE_DIR}/include /usr/include /usr/local/include
+  HINTS
+    ${CMAKE_SOURCE_DIR}/include
+    /usr/include
+    /usr/local/include
 )
 
 if (NOT CXXOPTS_INCLUDE_DIR)
@@ -20,6 +23,10 @@ else()
   message(STATUS "Find cxxopts.hpp: ${CXXOPTS_INCLUDE_DIR}")
 endif()
 
+set(PROJECT_INCLUDE_DIRS
+  ${CMAKE_SOURCE_DIR}/include
+  ${CXXOPTS_INCLUDE_DIR}
+)
 
 option(SET_MODE_ENABLED "Enable SET verification in rb_tree" OFF)
 option(RBTREE_DEBUG_DOT "Dump Graphviz (CUSTOM_MODE_DEBUG)" OFF)
@@ -28,7 +35,7 @@ message(STATUS "SET mode (rb_tree): ${SET_MODE_ENABLED}")
 message(STATUS "RBTREE_DEBUG_DOT: ${RBTREE_DEBUG_DOT}")
 
 add_executable(rb_tree src/main.cpp)
-target_include_directories(rb_tree PRIVATE ${CMAKE_SOURCE_DIR}/include)
+target_include_directories(rb_tree PRIVATE ${PROJECT_INCLUDE_DIRS})
 
 
 target_compile_definitions(rb_tree PRIVATE
@@ -37,7 +44,7 @@ target_compile_definitions(rb_tree PRIVATE
 )
 
 add_executable(rb_tree_bench src/bench.cpp)
-target_include_directories(rb_tree_bench PRIVATE ${CMAKE_SOURCE_DIR}/include)
+target_include_directories(rb_tree_bench PRIVATE ${PROJECT_INCLUDE_DIRS})
 target_compile_definitions(rb_tree_bench PRIVATE
   SET_MODE_ENABLED
   CUSTOM_MODE_BENCH

@@ -1,11 +1,8 @@
 #pragma once
 
 #include <iostream>
-#include <fstream>   
-#include <sstream>  
 #include <cstdlib>  
 #include <utility>
-#include <filesystem>
 #include <iterator>
 
 #include "rb_iterator.hpp"
@@ -316,35 +313,6 @@ public:
 
 
 private:
-    void search(const Node<KeyT>* node, uint64_t& counter, const KeyT& key1, const KeyT& key2) const
-    {
-        if (!node) 
-            return;
-
-        if (node->key_ >= key1 && node->key_ <= key2)
-        {
-            ++counter;
-
-            if (node->left_ ) 
-                search(node->left_,  counter, key1, key2);
-
-            if (node->right_) 
-                search(node->right_, counter, key1, key2);
-        }
-
-        else if (node->key_ < key1)
-        {
-            if (node->right_) 
-                search(node->right_, counter, key1, key2);
-        }
-
-        else // node->key_ > key2
-        {
-            if (node->left_)  
-                search(node->left_,  counter, key1, key2);
-        }
-    }
-
     Node<KeyT>* lower_bound_node(const KeyT& key) const
     {
         Node<KeyT>* cur = root_;

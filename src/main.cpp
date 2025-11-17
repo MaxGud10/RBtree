@@ -2,7 +2,6 @@
 #include <cstdint>
 #include <set>
 #include <string>
-#include <string_view>
 #include "cxxopts.hpp"
 
 #include "red_black_tree.hpp"
@@ -15,7 +14,6 @@ constexpr bool kVerifyWithSet = true;
 constexpr bool kVerifyWithSet = false;
 #endif
 
-// TODO: исправть README
 
 // TODo: nix 
 

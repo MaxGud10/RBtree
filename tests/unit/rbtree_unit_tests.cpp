@@ -1,5 +1,4 @@
 #include <gtest/gtest.h>
-#include <memory>
 #include "red_black_tree.hpp"
 
 using Key = int64_t;

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstddef>
+#include <iterator>
 
 namespace Tree
 {
@@ -13,7 +14,7 @@ class RB_Iterator
 {
     Node<KeyT>* node_ = nullptr;
 
-    Node<KeyT>* leftmost(Node<KeyT>* n)
+    Node<KeyT>* leftmost(Node<KeyT>* n) const
     {
         if (!n) 
             return nullptr;
@@ -24,7 +25,7 @@ class RB_Iterator
         return n;
     }
 
-    Node<KeyT>* rightmost(Node<KeyT>* n)
+    Node<KeyT>* rightmost(Node<KeyT>* n) const 
     {
         if (!n) 
             return nullptr;
@@ -39,13 +40,13 @@ public:
     using iterator_category = std::bidirectional_iterator_tag;
     using value_type        = KeyT;
     using difference_type   = std::ptrdiff_t;
-    using pointer           = const KeyT*;
-    using reference         = const KeyT&;
+    using pointer           = const KeyT*; // [x]
+    using reference         = const KeyT&; // [x]
 
              RB_Iterator() = default;
     explicit RB_Iterator(Node<KeyT>* node) : node_(node) {}
 
-    const KeyT& operator* () const { return node_->key_; }
+    const KeyT& operator* () const { return  node_->key_; }
     const KeyT* operator->() const { return &node_->key_; }
 
     bool operator==(const RB_Iterator& other) const { return node_ == other.node_; }

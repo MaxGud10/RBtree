@@ -1,11 +1,18 @@
-find_package(GTest REQUIRED)
+enable_testing()
+
+find_package(GTest REQUIRED CONFIG)
 
 
 add_executable(rbtree_unit_tests
     unit/rbtree_unit_tests.cpp
 )
+
 target_include_directories(rbtree_unit_tests PRIVATE ${CMAKE_SOURCE_DIR}/include)
-target_link_libraries(rbtree_unit_tests GTest::GTest GTest::Main)
+target_link_libraries(rbtree_unit_tests
+    PRIVATE
+        GTest::gtest_main   
+        pthread             
+)
 
 
 target_compile_definitions(rbtree_unit_tests PRIVATE TEST_DATA_DIR="${CMAKE_SOURCE_DIR}/tests")

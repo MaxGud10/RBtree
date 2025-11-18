@@ -15,7 +15,10 @@ constexpr bool kVerifyWithSet = false;
 #endif
 
 
-// TODo: nix 
+// засунуть в nix 
+// cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DSET_MODE_ENABLED=OFF -DCMAKE_EXPORT_COMPILE_COMMANDS=YES
+
+// // TODo: nix 
 
 static std::string get_gv_file_arg(int argc, char** argv, const char* def_name)
 {

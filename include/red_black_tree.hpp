@@ -8,11 +8,6 @@
 #include "rb_iterator.hpp"
 
 
-// TODO: посмотреть где можно убрать касты 
-////TODO: мб придется переписать readme 
-
-
-
 namespace Tree
 {
 
@@ -203,7 +198,7 @@ class Red_black_tree
     }
 
 public:
-    using iterator = RB_Iterator<KeyT>;
+    using const_iterator = RB_const_iterator<KeyT>;
 
     Red_black_tree() = default;
 
@@ -283,21 +278,21 @@ public:
         fix_insert(new_node); // балансировка 
     }
 
-    iterator begin() const 
+    const_iterator begin() const 
     {
         Node<KeyT>* node = root_;
         if (!node)
-            return iterator(nullptr);
+            return const_iterator(nullptr);
 
         while (node->left_)
             node = node->left_;
 
-        return iterator(node);
+        return const_iterator(node);
     }
 
-    iterator end() const
+    const_iterator end() const
     {
-        return iterator(nullptr);
+        return const_iterator(nullptr);
     }
 
     uint64_t range_queries(const KeyT key1, const KeyT key2) const 
@@ -354,14 +349,14 @@ private:
     }
 
 public:
-    iterator lower_bound(const KeyT& key) const
+    const_iterator lower_bound(const KeyT& key) const
     {
-        return iterator(lower_bound_node(key));
+        return const_iterator(lower_bound_node(key));
     }
 
-    iterator upper_bound(const KeyT& key) const
+    const_iterator upper_bound(const KeyT& key) const
     {
-        return iterator(upper_bound_node(key));
+        return const_iterator(upper_bound_node(key));
     }
 
 
@@ -404,7 +399,7 @@ public:
 
     int64_t find_range_elements(KeyT a, KeyT b) const 
     {
-        if (b <= a) 
+        if (b <= a) // README FIX 
         {
             return 0;
         }

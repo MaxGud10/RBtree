@@ -30,27 +30,24 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install deps (Graphviz, GTest, Ninja, ccache)
+      - name: Install system deps (Graphviz, Ninja, Python)
         run: |
           sudo apt-get update
-          sudo apt-get install -y graphviz ccache ninja-build
-          sudo apt-get install -y libgtest-dev
-          # Собираем и устанавливаем GTest вручную (CMake его не ставит автоматически)
-          cd /usr/src/gtest
-          sudo cmake .
-          sudo make
-          sudo mv lib/libgtest*.a /usr/lib/
+          sudo apt-get install -y graphviz ninja-build python3 python3-pip
 
-      - name: Ensure cxxopts.hpp is available
+      - name: Install Conan
         run: |
-          mkdir -p include
-          if [ ! -f include/cxxopts.hpp ]; then
-            echo "cxxopts.hpp not found in include/, downloading..."
-            curl -L https://raw.githubusercontent.com/jarro2783/cxxopts/master/include/cxxopts.hpp \
-              -o include/cxxopts.hpp
-          else
-            echo "cxxopts.hpp already present in include/"
-          fi
+          python3 -m pip install --upgrade pip
+          python3 -m pip install conan
+          conan --version
+
+      - name: Conan install deps (${{ matrix.config.build_type }})
+        run: |
+          conan profile detect --force
+          conan install . \
+            --output-folder=third_party \
+            --build=missing \
+            -s build_type=${{ matrix.config.build_type }}
 
       - name: Configure (CMake) - ${{ matrix.config.name }}
         run: |
@@ -58,7 +55,8 @@ jobs:
             -G Ninja \
             -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }} \
             -DSET_MODE_ENABLED=${{ matrix.config.set_mode }} \
-            -DRBTREE_DEBUG_DOT=${{ matrix.config.debug_dot }}
+            -DRBTREE_DEBUG_DOT=${{ matrix.config.debug_dot }} \
+            -DCMAKE_TOOLCHAIN_FILE=third_party/build/${{ matrix.config.build_type }}/generators/conan_toolchain.cmake
 
       - name: Build
         run: cmake --build build --config ${{ matrix.config.build_type }} -- -k 0

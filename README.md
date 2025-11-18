@@ -24,7 +24,7 @@
 
 
 ## Вывод
-Для каждого запроса программа должна учитывать количество ключей в дереве, которые лежат строго в левой и правой границах запроса (включительно).
+Для каждого запроса программа должна учитывать количество ключей в дереве, которые лежат строго в левой и правой границах запроса ( невключительно).
 
 ### Пример
 ```bash
@@ -76,12 +76,22 @@ cd RBtree
 mkdir build
 ```
 
+Создадим виртуальную среду и установим Conan:
+```bash
+python3 -m venv .venv && source .venv/bin/activate && pip3 install conan
+```
+
+Установим зависимости проекта с помощью Conan:
+```bash
+conan install . --output-folder=third_party --build=missing
+```
+
+
  - `Основной режимy`
- ```bash
+```bash
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DSET_MODE_ENABLED=OFF
 cmake --build build
 ./build/rb_tree < tests/end2end/small_input.txt
-
 ```
 
 - `Режим проверки с std::set`

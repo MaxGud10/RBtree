@@ -10,7 +10,7 @@ template <typename KeyT>
 struct Node; 
 
 template <typename KeyT>
-class RB_Iterator
+class RB_const_iterator
 {
     Node<KeyT>* node_ = nullptr;
 
@@ -40,19 +40,19 @@ public:
     using iterator_category = std::bidirectional_iterator_tag;
     using value_type        = KeyT;
     using difference_type   = std::ptrdiff_t;
-    using pointer           = const KeyT*; // [x]
-    using reference         = const KeyT&; // [x]
+    using pointer           = const KeyT*; 
+    using reference         = const KeyT&; 
 
-             RB_Iterator() = default;
-    explicit RB_Iterator(Node<KeyT>* node) : node_(node) {}
+             RB_const_iterator() = default;
+    explicit RB_const_iterator(Node<KeyT>* node) : node_(node) {}
 
     const KeyT& operator* () const { return  node_->key_; }
     const KeyT* operator->() const { return &node_->key_; }
 
-    bool operator==(const RB_Iterator& other) const { return node_ == other.node_; }
-    bool operator!=(const RB_Iterator& other) const { return node_ != other.node_; }
+    bool operator==(const RB_const_iterator& other) const { return node_ == other.node_; }
+    bool operator!=(const RB_const_iterator& other) const { return node_ != other.node_; }
 
-    RB_Iterator& operator++()
+    RB_const_iterator& operator++()
     {
         if (!node_) return *this;
 
@@ -76,7 +76,7 @@ public:
         return *this;
     }
 
-    RB_Iterator& operator--()
+    RB_const_iterator& operator--()
     {
         if (!node_) return *this;
 

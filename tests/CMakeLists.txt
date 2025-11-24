@@ -1,6 +1,7 @@
 enable_testing()
 
 find_package(GTest REQUIRED CONFIG)
+find_package(Python3 COMPONENTS Interpreter REQUIRED)
 
 
 add_executable(rbtree_unit_tests
@@ -22,15 +23,23 @@ add_test(NAME unit_all
   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 )
 
-
 add_test(NAME e2e_small
-  COMMAND bash -c "$<TARGET_FILE:rb_tree> < ${CMAKE_SOURCE_DIR}/tests/end2end/small_input.txt | diff -u - ${CMAKE_SOURCE_DIR}/tests/end2end/small_expected.txt"
+  COMMAND
+    ${Python3_EXECUTABLE}
+    ${CMAKE_SOURCE_DIR}/tests/end2end/run_e2e.py
+    --mode compare
+    $<TARGET_FILE:rb_tree>
+    ${CMAKE_SOURCE_DIR}/tests/end2end/small_input.txt
+    ${CMAKE_SOURCE_DIR}/tests/end2end/small_expected.txt
   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 )
-
 
 add_test(NAME e2e_big_runs
-  COMMAND bash -c "$<TARGET_FILE:rb_tree> < ${CMAKE_SOURCE_DIR}/tests/end2end/big_input.txt > /dev/null"
+  COMMAND
+    ${Python3_EXECUTABLE}
+    ${CMAKE_SOURCE_DIR}/tests/end2end/run_e2e.py
+    --mode bench
+    $<TARGET_FILE:rb_tree>
+    ${CMAKE_SOURCE_DIR}/tests/end2end/big_input.txt
   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 )
-

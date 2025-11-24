@@ -2,6 +2,7 @@
 
 #include <cstddef>
 #include <iterator>
+#include <cassert>
 
 namespace Tree
 {
@@ -12,9 +13,9 @@ struct Node;
 template <typename KeyT>
 class RB_const_iterator
 {
-    Node<KeyT>* node_ = nullptr;
+    const Node<KeyT>* node_ = nullptr;
 
-    Node<KeyT>* leftmost(Node<KeyT>* n) const
+    const Node<KeyT>* leftmost(const Node<KeyT>* n) const
     {
         if (!n) 
             return nullptr;
@@ -25,7 +26,7 @@ class RB_const_iterator
         return n;
     }
 
-    Node<KeyT>* rightmost(Node<KeyT>* n) const 
+    const Node<KeyT>* rightmost(const Node<KeyT>* n) const
     {
         if (!n) 
             return nullptr;
@@ -46,8 +47,17 @@ public:
              RB_const_iterator() = default;
     explicit RB_const_iterator(Node<KeyT>* node) : node_(node) {}
 
-    const KeyT& operator* () const { return  node_->key_; }
-    const KeyT* operator->() const { return &node_->key_; }
+    const KeyT& operator* () const 
+    {
+        assert(node_ && "dereferencing end() iterator");
+        return node_->key_;
+    }
+
+    const KeyT* operator->() const 
+    {
+        assert(node_ && "dereferencing end() iterator");
+        return &node_->key_;
+    }
 
     bool operator==(const RB_const_iterator& other) const { return node_ == other.node_; }
     bool operator!=(const RB_const_iterator& other) const { return node_ != other.node_; }

@@ -1,4 +1,10 @@
 build
 .venv
-vscode
+.vscode
 third_party
+include/cxxopts.hpp
+include/darft.hpp
+CMakeUserPresets.json
+compile_commands.json
+mega.txt
+.cache

@@ -40,7 +40,7 @@ int main(int argc, char** argv)
 
     const long long batch_sz = std::max(1LL, get_bench_batch_arg(argc, argv, 2000));
 
-    RangeQueries::Range_queries<int64_t> range_quer;
+    Tree::Red_black_tree<int64_t> tree;
 #ifdef SET_MODE_ENABLED
     std::set<int64_t> set;
 #endif
@@ -97,7 +97,7 @@ int main(int argc, char** argv)
                 }
 
                 start_if_first(our_ins_in_batch, our_ins_t0);
-                range_quer.add_element(key);
+                tree.insert_elem(a);
                 close_if_full(our_ins_in_batch, our_insert_time, our_ins_t0);
 
 #ifdef SET_MODE_ENABLED
@@ -120,7 +120,7 @@ int main(int argc, char** argv)
 
 
                 start_if_first(our_qry_in_batch, our_qry_t0);
-                const auto ans = range_quer.find_range_elements(a, b);
+                const auto ans = tree.range_queries(a, b);
                 close_if_full(our_qry_in_batch, our_query_time, our_qry_t0);
 
 #ifdef SET_MODE_ENABLED

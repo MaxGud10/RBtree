@@ -4,6 +4,7 @@
 #include <cstdlib>  
 #include <utility>
 #include <iterator>
+#include <memory>
 
 #include "rb_iterator.hpp"
 
@@ -217,9 +218,9 @@ public:
     Red_black_tree& operator=(const Red_black_tree&) = delete;
 
 
-    Red_black_tree(Red_black_tree&& other) : root_(std::exchange(other.root_, nullptr)) {}
+    Red_black_tree(Red_black_tree&& other) noexcept : root_(std::exchange(other.root_, nullptr)) {}
 
-    Red_black_tree& operator=(Red_black_tree&& other) 
+    Red_black_tree& operator=(Red_black_tree&& other) noexcept
     {
         if (this != &other)
         {
@@ -235,6 +236,51 @@ public:
 
 
     // вставка ключа
+    // void insert_elem(const KeyT key)
+    // {
+    //     Node<KeyT>* parent  = nullptr;
+    //     Node<KeyT>* current = root_;
+
+    //     while (current)
+    //     {
+    //         parent = current;
+    //         if (key < current->key_)
+    //             current = current->left_;
+
+    //         else if (key > current->key_)
+    //             current = current->right_;
+                
+    //         else
+    //             return; 
+    //     }
+
+    //     // cоздаем новый узел и привязать
+    //     Node<KeyT>* new_node          = new Node<KeyT>(key, Color::red);
+    //                 new_node->parent_ = parent;
+
+    //     if (!parent)
+    //     {
+    //         root_        = new_node;     // первый узел
+    //         root_->color = Color::black; // корень всегда чёрный
+
+    //         return;
+    //     }
+
+    //     else if (key < parent->key_)
+    //     {
+    //         parent->left_ = new_node;
+    //     }
+
+    //     else
+    //     {
+    //         parent->right_ = new_node;
+    //     }
+
+    //     fix_insert(new_node); // балансировка 
+    // }
+
+
+    // вставка ключа
     void insert_elem(const KeyT key)
     {
         Node<KeyT>* parent  = nullptr;
@@ -243,17 +289,18 @@ public:
         while (current)
         {
             parent = current;
+
             if (key < current->key_)
                 current = current->left_;
 
             else if (key > current->key_)
                 current = current->right_;
-                
-            else
-                return; 
-        }
 
-        // cоздаем нлвый узел и привязать
+            else
+                return;
+        }
+            
+        // cоздаем новый узел и привязать
         Node<KeyT>* new_node          = new Node<KeyT>(key, Color::red);
                     new_node->parent_ = parent;
 
@@ -264,19 +311,34 @@ public:
 
             return;
         }
-
         else if (key < parent->key_)
         {
             parent->left_ = new_node;
         }
-
         else
         {
             parent->right_ = new_node;
         }
 
-        fix_insert(new_node); // балансировка 
+        try
+        {
+            fix_insert(new_node);
+        }
+        catch (...)
+        {
+            if (parent->left_ == new_node)
+                parent->left_ = nullptr;
+
+            else if (parent->right_ == new_node)
+                parent->right_ = nullptr;
+
+            delete new_node;
+
+            throw;
+        }
     }
+
+
 
     const_iterator begin() const 
     {
@@ -369,56 +431,56 @@ public:
 namespace RangeQueries 
 {
 
-template<typename KeyT>
-class Range_queries 
-{
-    Tree::Red_black_tree<KeyT> rb_tree;
+// template<typename KeyT>
+// class Range_queries 
+// {
+//     Tree::Red_black_tree<KeyT> rb_tree;
 
-public:
-    const Tree::Red_black_tree<KeyT>& get_tree() const {return rb_tree;}
+// public:
+//     const Tree::Red_black_tree<KeyT>& get_tree() const {return rb_tree;}
 
-    void add_element(const KeyT& key)
-    {
-        rb_tree.insert_elem(key);
-    }
+//     void add_element(const KeyT& key)
+//     {
+//         rb_tree.insert_elem(key);
+//     }
 
-    void add_element(std::istream& in) 
-    {
-        KeyT key;
+//     void add_element(std::istream& in) 
+//     {
+//         KeyT key;
         
-        if (!(in >> key))
-        {
-            std::cerr << "WARN: failed to read key from stdin\n";
+//         if (!(in >> key))
+//         {
+//             std::cerr << "WARN: failed to read key from stdin\n";
 
-            return;
-        }
+//             return;
+//         }
 
-        rb_tree.insert_elem(key);
-    }
+//         rb_tree.insert_elem(key);
+//     }
 
 
-    int64_t find_range_elements(KeyT a, KeyT b) const 
-    {
-        if (b <= a) // README FIX 
-        {
-            return 0;
-        }
-        return static_cast<int64_t>(rb_tree.range_queries(a, b));
-    }
+//     int64_t find_range_elements(KeyT a, KeyT b) const 
+//     {
+//         if (b <= a) // README FIX 
+//         {
+//             return 0;
+//         }
+//         return static_cast<int64_t>(rb_tree.range_queries(a, b));
+//     }
 
-    int64_t find_range_elements(std::istream& in) 
-    {
-        KeyT a{}, b{};
+//     int64_t find_range_elements(std::istream& in) 
+//     {
+//         KeyT a{}, b{};
 
-        if (!(in >> a >> b)) 
-        {
-            std::cerr << "WARN: failed to read range from stdin\n";
+//         if (!(in >> a >> b)) 
+//         {
+//             std::cerr << "WARN: failed to read range from stdin\n";
 
-            return 0;
-        }
+//             return 0;
+//         }
 
-        return find_range_elements(a, b); 
-    }
-};
+//         return find_range_elements(a, b); 
+//     }
+// };
 
 } // namespace RangeQueries

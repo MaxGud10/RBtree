@@ -109,7 +109,7 @@ static void run_normal(bool verify_with_set, int argc, char** argv)
     std::ios::sync_with_stdio(false);
     std::cin.tie(nullptr);
 
-    RangeQueries::Range_queries<int64_t> range_quer;
+    Tree::Red_black_tree<int64_t> tree;
 #ifdef SET_MODE_ENABLED
     std::set<int64_t> set;
 #endif
@@ -124,7 +124,7 @@ static void run_normal(bool verify_with_set, int argc, char** argv)
     {
         if (mode == 'k') 
         {
-            range_quer.add_element(a);
+            tree.insert_elem(a);
 #ifdef SET_MODE_ENABLED
             if (verify_with_set) set.insert(a);
 #endif
@@ -132,7 +132,7 @@ static void run_normal(bool verify_with_set, int argc, char** argv)
         }
 
         // mode == 'q'
-        const auto ans = range_quer.find_range_elements(a, b);
+        const auto ans = tree.range_queries(a, b);
         std::cout << ans << ' ';
         printed_any_answer = true;
 
@@ -148,7 +148,7 @@ static void run_normal(bool verify_with_set, int argc, char** argv)
     {
         const std::string dot_name = get_gv_file_arg(argc, argv, "graphviz/file_graph.dot");
         Tree::Print_tree<int64_t> pr_tr;
-        pr_tr.dump(range_quer.get_tree(), dot_name.c_str(), "graphviz/tree_graph.png", true);
+        pr_tr.dump(tree, dot_name.c_str(), "graphviz/tree_graph.png", true);
     }
 #endif
 }

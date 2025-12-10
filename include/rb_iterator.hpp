@@ -109,7 +109,7 @@ public:
         return *this;
     }
 
-    Node<KeyT>* get_node() const { return node_; }
+    const Node<KeyT>* get_node() const { return node_; }
 };
 
 } // namespace Tree

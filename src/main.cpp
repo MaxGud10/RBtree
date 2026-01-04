@@ -39,13 +39,15 @@ static std::string get_gv_file_arg(int argc, char** argv, const char* def_name)
     return def_name;
 }
 
-static int64_t range_queries_set(const std::set<int64_t>& set, int64_t a, int64_t b);
-static bool    read_next        (std::istream& in, char& mode, int64_t& a, int64_t& b);
-static void    run_normal       (bool verify_with_set, int argc, char** argv);
+static int64_t     range_queries_set(const std::set<int64_t>& set, int64_t a, int64_t b);
+static bool        read_next        (std::istream& in, char& mode, int64_t& a, int64_t& b);
+static inline void verify_query     (const std::set<int64_t>& set, int64_t a, int64_t b, int64_t ans);
+static void        run_normal       (int argc, char** argv);
+
 
 int main(int argc, char** argv)
 {
-    run_normal(kVerifyWithSet, argc, argv);
+    run_normal(argc, argv);
 
     return 0;
 }
@@ -90,7 +92,7 @@ static bool read_next(std::istream& in, char& mode, int64_t& a, int64_t& b)
     return false;
 }
 
-#ifdef SET_MODE_ENABLED
+// если режим выключен, компилятор выкинет код этой функции 
 static inline void verify_query(const std::set<int64_t>& set, int64_t a, int64_t b, int64_t ans)
 {
     const auto check = range_queries_set(set, a, b);
@@ -101,18 +103,16 @@ static inline void verify_query(const std::set<int64_t>& set, int64_t a, int64_t
                   << " for q " << a << ' ' << b << '\n';
     }
 }
-#endif
 
-
-static void run_normal(bool verify_with_set, int argc, char** argv)
+static void run_normal(int argc, char** argv)
 {
     std::ios::sync_with_stdio(false);
     std::cin.tie(nullptr);
 
     Tree::Red_black_tree<int64_t> tree;
-#ifdef SET_MODE_ENABLED
+
     std::set<int64_t> set;
-#endif
+
 
     char    mode;
     int64_t a = 0;
@@ -125,9 +125,12 @@ static void run_normal(bool verify_with_set, int argc, char** argv)
         if (mode == 'k') 
         {
             tree.insert_elem(a);
-#ifdef SET_MODE_ENABLED
-            if (verify_with_set) set.insert(a);
-#endif
+
+            if constexpr (kVerifyWithSet)
+            {
+                set.insert(a);
+            }
+
             continue;
         }
 
@@ -136,10 +139,10 @@ static void run_normal(bool verify_with_set, int argc, char** argv)
         std::cout << ans << ' ';
         printed_any_answer = true;
 
-#ifdef SET_MODE_ENABLED
-        if (verify_with_set) 
+        if constexpr (kVerifyWithSet)
+        {
             verify_query(set, a, b, ans);
-#endif
+        }
     }
 
     if (printed_any_answer) std::cout << '\n';

@@ -12,6 +12,12 @@ using Clock = std::chrono::steady_clock;
 using ns    = std::chrono::nanoseconds;
 using us    = std::chrono::microseconds;
 
+#ifdef SET_MODE_ENABLED
+constexpr bool kVerifyWithSet = true;
+#else
+constexpr bool kVerifyWithSet = false;
+#endif
+
 static long long get_bench_batch_arg(int argc, char** argv, long long def_val)
 {
     cxxopts::Options options("rb_tree_bench", "RB-tree benchmark");
@@ -30,10 +36,10 @@ static inline void    start_if_first   (std::size_t in_batch, Clock::time_point 
 static inline void    close_if_full    (std::size_t &in_batch, ns &total, Clock::time_point t0, std::size_t batch_sz);
 static inline void    flush_tail       (std::size_t in_batch, ns &total,  Clock::time_point t0);
 
-#ifdef SET_MODE_ENABLED
-static void bench_insert_set      (std::set<int64_t> &set,int64_t key, std::size_t &in_batch, ns &total, Clock::time_point &t0, std::size_t batch_sz);
-static void verify_and_bench_query(const std::set<int64_t> &set, int64_t a, int64_t b, int64_t ans, std::size_t &in_batch, ns &total, Clock::time_point &t0, std::size_t batch_sz);
-#endif
+
+static inline void bench_insert_set      (std::set<int64_t> &set,int64_t key, std::size_t &in_batch, ns &total, Clock::time_point &t0, std::size_t batch_sz);
+static inline void verify_and_bench_query(const std::set<int64_t> &set, int64_t a, int64_t b, int64_t ans, std::size_t &in_batch, ns &total, Clock::time_point &t0, std::size_t batch_sz);
+
 
 int main(int argc, char** argv)
 {
@@ -45,24 +51,19 @@ int main(int argc, char** argv)
 
     Tree::Red_black_tree<int64_t> tree;
     
-#ifdef SET_MODE_ENABLED
     std::set<int64_t> set;
-#endif
 
     ns our_insert_time{0}, our_query_time{0};
     ns set_insert_time{0}, set_query_time{0};
 
     std::size_t our_ins_in_batch = 0, our_qry_in_batch = 0;
-    std::size_t ins_cnt = 0, qry_cnt = 0;
+    std::size_t ins_cnt          = 0, qry_cnt          = 0;
 
-#ifdef SET_MODE_ENABLED
     std::size_t set_ins_in_batch = 0, set_qry_in_batch = 0;
-#endif
+
 
     Clock::time_point our_ins_t0{}, our_qry_t0{};
-#ifdef SET_MODE_ENABLED
     Clock::time_point set_ins_t0{}, set_qry_t0{};
-#endif
 
     char mode;
     int64_t key = 0, a = 0, b = 0;
@@ -85,10 +86,12 @@ int main(int argc, char** argv)
                 tree.insert_elem(key);
                 close_if_full(our_ins_in_batch,  our_insert_time, our_ins_t0, batch_sz);
 
-#ifdef SET_MODE_ENABLED
-                bench_insert_set(set, key,
-                                 set_ins_in_batch, set_insert_time, set_ins_t0, batch_sz);
-#endif
+                if constexpr (kVerifyWithSet)
+                {
+                    bench_insert_set(set, key,
+                                     set_ins_in_batch, set_insert_time, set_ins_t0,
+                                     batch_sz);
+                }
 
                 ++ins_cnt;
                 break;
@@ -106,10 +109,12 @@ int main(int argc, char** argv)
                 const auto ans = tree.range_queries(a, b);
                 close_if_full(our_qry_in_batch, our_query_time, our_qry_t0, batch_sz);
 
-#ifdef SET_MODE_ENABLED
-                verify_and_bench_query(set, a, b, ans,
-                                       set_qry_in_batch, set_query_time, set_qry_t0, batch_sz);
-#endif
+                if constexpr (kVerifyWithSet)
+                {
+                    verify_and_bench_query(set, a, b, ans,
+                                           set_qry_in_batch, set_query_time, set_qry_t0,
+                                           batch_sz);
+                }
 
                 std::cout << ans << ' ';
                 printed_any_answer = true;
@@ -130,21 +135,17 @@ int main(int argc, char** argv)
     flush_tail(our_ins_in_batch, our_insert_time, our_ins_t0);
     flush_tail(our_qry_in_batch, our_query_time,  our_qry_t0);
 
-#ifdef SET_MODE_ENABLED
-    flush_tail(set_ins_in_batch, set_insert_time, set_ins_t0);
-    flush_tail(set_qry_in_batch, set_query_time,  set_qry_t0);
-#endif
+    if constexpr (kVerifyWithSet)
+    {
+        flush_tail(set_ins_in_batch, set_insert_time, set_ins_t0);
+        flush_tail(set_qry_in_batch, set_query_time,  set_qry_t0);
+    }
 
     const auto us_our_ins = std::chrono::duration_cast<us>(our_insert_time).count();
-    const auto us_our_qry = std::chrono::duration_cast<us>(our_query_time).count();
+    const auto us_our_qry = std::chrono::duration_cast<us>(our_query_time ).count();
 
-#ifdef SET_MODE_ENABLED
-    const auto us_set_ins = std::chrono::duration_cast<us>(set_insert_time).count();
-    const auto us_set_qry = std::chrono::duration_cast<us>(set_query_time).count();
-#else
-    const long long us_set_ins = 0;
-    const long long us_set_qry = 0;
-#endif
+    const long long us_set_ins = kVerifyWithSet ? std::chrono::duration_cast<us>(set_insert_time).count() : 0;
+    const long long us_set_qry = kVerifyWithSet ? std::chrono::duration_cast<us>(set_query_time ).count() : 0;
 
     std::cerr
         << "[BENCH]\n"
@@ -153,13 +154,15 @@ int main(int argc, char** argv)
         << "query  ops : " << qry_cnt << "\n\n"
         << "Our tree:\n"
         << "  insert: " << us_our_ins << " us total  \n"
-        << "  query : " << us_our_qry << " us total  \n\n"
-#ifdef SET_MODE_ENABLED
-        << "std::set:\n"
-        << "  insert: " << us_set_ins << " us total  \n"
-        << "  query : " << us_set_qry << " us total  \n"
-#endif
-        ;
+        << "  query : " << us_our_qry << " us total  \n\n";
+
+    if constexpr (kVerifyWithSet)
+    {
+        std::cerr
+            << "std::set:\n"
+            << "  insert: " << us_set_ins << " us total\n"
+            << "  query : " << us_set_qry << " us total\n";
+    }
 
     return 0;
 }
@@ -197,15 +200,15 @@ static inline void flush_tail(std::size_t in_batch, ns &total, Clock::time_point
         total += std::chrono::duration_cast<ns>(Clock::now() - t0);
 }
 
-#ifdef SET_MODE_ENABLED
-static void bench_insert_set(std::set<int64_t> &set,int64_t key, std::size_t &in_batch, ns &total, Clock::time_point &t0, std::size_t batch_sz)
+// вызываются только при if constexpr(kVerifyWithSet)
+static inline void bench_insert_set(std::set<int64_t> &set,int64_t key, std::size_t &in_batch, ns &total, Clock::time_point &t0, std::size_t batch_sz)
 {
     start_if_first(in_batch, t0);
     set.insert(key);
     close_if_full(in_batch, total, t0, batch_sz);
 }
 
-static void verify_and_bench_query(const std::set<int64_t> &set, int64_t a, int64_t b, int64_t ans, std::size_t &in_batch, ns &total, Clock::time_point &t0, std::size_t batch_sz)
+static inline void verify_and_bench_query(const std::set<int64_t> &set, int64_t a, int64_t b, int64_t ans, std::size_t &in_batch, ns &total, Clock::time_point &t0, std::size_t batch_sz)
 {
     start_if_first(in_batch, t0);
     const auto check = range_queries_set(set, a, b);
@@ -218,4 +221,3 @@ static void verify_and_bench_query(const std::set<int64_t> &set, int64_t a, int6
                   << " set=" << check << '\n';
     }
 }
-#endif

@@ -31,13 +31,13 @@ static long long get_bench_batch_arg(int argc, char** argv, long long def_val)
     return result["bench-batch"].as<long long>();
 }
 
-static inline int64_t range_queries_set(const std::set<int64_t>& set, int64_t a, int64_t b);
+static inline int64_t range_queries_set(const std::set<int64_t> &set, int64_t a, int64_t b);
 static inline void    start_if_first   (std::size_t in_batch, Clock::time_point &t0);
-static inline void    close_if_full    (std::size_t &in_batch, ns &total, Clock::time_point t0, std::size_t batch_sz);
-static inline void    flush_tail       (std::size_t in_batch, ns &total,  Clock::time_point t0);
+static inline void    close_if_full    (std::size_t &in_batch, ns &total,  Clock::time_point t0, std::size_t batch_sz);
+static inline void    flush_tail       (std::size_t in_batch,  ns &total,  Clock::time_point t0);
 
 
-static inline void bench_insert_set      (std::set<int64_t> &set,int64_t key, std::size_t &in_batch, ns &total, Clock::time_point &t0, std::size_t batch_sz);
+static inline void bench_insert_set      (      std::set<int64_t> &set, int64_t key, std::size_t &in_batch, ns &total, Clock::time_point &t0, std::size_t batch_sz);
 static inline void verify_and_bench_query(const std::set<int64_t> &set, int64_t a, int64_t b, int64_t ans, std::size_t &in_batch, ns &total, Clock::time_point &t0, std::size_t batch_sz);
 
 
@@ -150,8 +150,8 @@ int main(int argc, char** argv)
     std::cerr
         << "[BENCH]\n"
         << "batch      : " << batch_sz << "\n"
-        << "insert ops : " << ins_cnt << "\n"
-        << "query  ops : " << qry_cnt << "\n\n"
+        << "insert ops : " << ins_cnt  << "\n"
+        << "query  ops : " << qry_cnt  << "\n\n"
         << "Our tree:\n"
         << "  insert: " << us_our_ins << " us total  \n"
         << "  query : " << us_our_qry << " us total  \n\n";

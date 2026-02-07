@@ -1,10 +1,10 @@
 #pragma once
 
-#include <iostream>
 #include <cstdlib>  
 #include <utility>
 #include <iterator>
 #include <memory>
+#include <optional>
 
 #include "rb_iterator.hpp"
 
@@ -17,6 +17,9 @@ enum class Color
     red,
     black,
 };     
+
+namespace detail
+{
 
 template <typename KeyT>
 struct Node 
@@ -32,26 +35,29 @@ struct Node
 
     explicit Node(const KeyT &key, Color color = Color::red) : key_{key}, color{color} {}
 };
+} // namespace detail
 
 template <typename KeyT>
 class Red_black_tree
 {
-    Node<KeyT>* root_  = nullptr;
+    using NodeT  = detail::Node<KeyT>;
 
-    Node<KeyT>* get_parent(Node<KeyT>* node) const
+    NodeT *root_ = nullptr;
+
+    NodeT *get_parent(NodeT *node) const
     {
         return node ? node->parent_ : nullptr;
     }
 
-    Node<KeyT>* get_grandparent(Node<KeyT>* node) const 
+    NodeT *get_grandparent(NodeT *node) const 
     {
-        Node<KeyT>* parent_node = get_parent(node);
+        NodeT *parent_node = get_parent(node);
 
         return parent_node ? parent_node->parent_ : nullptr;
     }
 
     // балансировка после вставки ключа
-    void fix_insert(Node<KeyT>* current_node)
+    void fix_insert(NodeT *current_node)
     {
         while (current_node && current_node != root_)
         {
@@ -127,12 +133,12 @@ class Red_black_tree
         root_->color = Color::black;
     }
 
-    void left_rotate(Node<KeyT>* pivot_node)
+    void left_rotate(NodeT *pivot_node)
     {
         if (!pivot_node) 
             return;
 
-        Node<KeyT>* new_root = pivot_node->right_;
+        NodeT *new_root = pivot_node->right_;
 
         if (!new_root) 
             return;
@@ -141,28 +147,28 @@ class Red_black_tree
         if (new_root->left_)
             new_root->left_->parent_ = pivot_node;
 
-        Node<KeyT>* parent_of_pivot  = pivot_node->parent_;
-        new_root->parent_            = parent_of_pivot;
+        NodeT *parent_of_pivot  = pivot_node->parent_;
+        new_root->parent_       = parent_of_pivot;
 
         if (!parent_of_pivot)
             root_ = new_root;
 
         else if (pivot_node == parent_of_pivot->left_)
-            parent_of_pivot->left_   = new_root;
+            parent_of_pivot->left_  = new_root;
 
         else
-            parent_of_pivot->right_  = new_root;
+            parent_of_pivot->right_ = new_root;
 
         new_root->left_ = pivot_node;
                           pivot_node->parent_ = new_root;
     }
 
-    void right_rotate(Node<KeyT>* pivot_node)
+    void right_rotate(NodeT *pivot_node)
     {
         if (!pivot_node) 
             return;
 
-        Node<KeyT>* new_root = pivot_node->left_;
+        NodeT *new_root = pivot_node->left_;
 
         if (!new_root) 
             return;
@@ -171,23 +177,23 @@ class Red_black_tree
         if (new_root->right_)
             new_root->right_->parent_ = pivot_node;
 
-        Node<KeyT>* parent_of_pivot   = pivot_node->parent_;
-        new_root->parent_             = parent_of_pivot;
+        NodeT *parent_of_pivot = pivot_node->parent_;
+        new_root->parent_      = parent_of_pivot;
 
         if (!parent_of_pivot)
             root_ = new_root;
 
         else if (pivot_node == parent_of_pivot->right_)
-            parent_of_pivot->right_   = new_root;
+            parent_of_pivot->right_ = new_root;
 
         else
-            parent_of_pivot->left_    = new_root;
+            parent_of_pivot->left_  = new_root;
 
         new_root->right_ = pivot_node;
                            pivot_node->parent_ = new_root;
     }
 
-    static void destroy_subtree(Node<KeyT>* node) noexcept
+    static void destroy_subtree(NodeT *node) noexcept
     {
         if (!node) 
             return;
@@ -205,7 +211,7 @@ public:
 
     Red_black_tree(KeyT key) 
     {
-        root_ = new Node<KeyT> (key, Color::black);
+        root_ = new NodeT (key, Color::black);
     }
 
     ~Red_black_tree()
@@ -215,11 +221,11 @@ public:
     }
 
     Red_black_tree(const Red_black_tree&)            = delete;
-    Red_black_tree& operator=(const Red_black_tree&) = delete;
+    Red_black_tree &operator=(const Red_black_tree&) = delete;
 
     Red_black_tree(Red_black_tree&& other) noexcept : root_(std::exchange(other.root_, nullptr)) {}
 
-    Red_black_tree& operator=(Red_black_tree&& other) noexcept
+    Red_black_tree &operator=(Red_black_tree&& other) noexcept
     {
         if (this != &other)
         {
@@ -231,13 +237,20 @@ public:
         return *this;
     }
 
-    const Node<KeyT> *get_root() const { return root_; }
+#ifdef CUSTOM_MODE_DEBUG
+    template <class Visitor>
+    void debug_visit(Visitor&& visitor) const
+    {
+        auto v = std::forward<Visitor>(visitor); 
+        debug_visit_impl_(root_, v);             
+    }
+#endif
 
     // вставка ключа
     void insert_elem(const KeyT key)
     {
-        Node<KeyT>* parent  = nullptr;
-        Node<KeyT>* current = root_;
+        NodeT *parent  = nullptr;
+        NodeT *current = root_;
 
         while (current)
         {
@@ -254,8 +267,8 @@ public:
         }
             
         // cоздаем новый узел и привязать
-        Node<KeyT>* new_node          = new Node<KeyT>(key, Color::red);
-                    new_node->parent_ = parent;
+        NodeT *new_node = new NodeT(key, Color::red);
+               new_node->parent_ = parent;
 
         if (!parent)
         {
@@ -293,7 +306,7 @@ public:
 
     const_iterator begin() const 
     {
-        Node<KeyT> *node = root_;
+        const NodeT *node = root_;
         if (!node)
             return const_iterator(nullptr, root_);
 
@@ -310,7 +323,7 @@ public:
 
     uint64_t range_queries(const KeyT key1, const KeyT key2) const 
     { 
-        if (key2 < key1)
+        if (key2 <= key1)
             return 0;
 
         auto first = lower_bound(key1);
@@ -321,10 +334,10 @@ public:
 
 
 private:
-    Node<KeyT>* lower_bound_node(const KeyT& key) const
+    NodeT *lower_bound_node(const KeyT& key) const
     {
-        Node<KeyT>* cur = root_;
-        Node<KeyT>* res = nullptr;
+        NodeT *cur = root_;
+        NodeT *res = nullptr;
 
         while (cur)
         {
@@ -341,10 +354,10 @@ private:
         return res;
     }
 
-    Node<KeyT>* upper_bound_node(const KeyT& key) const
+    NodeT *upper_bound_node(const KeyT& key) const
     {
-        Node<KeyT>* cur = root_;
-        Node<KeyT>* res = nullptr;
+        NodeT *cur = root_;
+        NodeT *res = nullptr;
 
         while (cur)
         {
@@ -360,6 +373,25 @@ private:
 
         return res;
     }
+
+#ifdef CUSTOM_MODE_DEBUG
+    template <class Visitor>
+    void debug_visit_impl_(const NodeT* node, Visitor& visitor) const
+    {
+        if (!node) return;
+
+        visitor(
+            node->key_,
+            node->color,
+            node->parent_ ? std::optional<KeyT>(node->parent_->key_) : std::nullopt,
+            node->left_   ? std::optional<KeyT>(node->left_  ->key_) : std::nullopt,
+            node->right_  ? std::optional<KeyT>(node->right_ ->key_) : std::nullopt
+        );
+
+        debug_visit_impl_(node->left_,  visitor);
+        debug_visit_impl_(node->right_, visitor);
+    }
+#endif
 
 public:
     const_iterator lower_bound(const KeyT& key) const

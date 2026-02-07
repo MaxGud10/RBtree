@@ -15,6 +15,10 @@ target_link_libraries(rbtree_unit_tests
         pthread             
 )
 
+target_compile_definitions(rbtree_unit_tests PRIVATE
+    TEST_DATA_DIR="${CMAKE_SOURCE_DIR}/tests"
+    CUSTOM_MODE_DEBUG
+)
 
 target_compile_definitions(rbtree_unit_tests PRIVATE TEST_DATA_DIR="${CMAKE_SOURCE_DIR}/tests")
 

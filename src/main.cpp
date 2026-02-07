@@ -39,9 +39,9 @@ static std::string get_gv_file_arg(int argc, char** argv, const char* def_name)
     return def_name;
 }
 
-static int64_t     range_queries_set(const std::set<int64_t>& set, int64_t a, int64_t b);
-static bool        read_next        (std::istream& in, char& mode, int64_t& a, int64_t& b);
-static inline void verify_query     (const std::set<int64_t>& set, int64_t a, int64_t b, int64_t ans);
+static int64_t     range_queries_set(const std::set<int64_t> &set, int64_t a,  int64_t b);
+static bool        read_next        (std::istream &in, char &mode, int64_t &a, int64_t &b);
+static inline void verify_query     (const std::set<int64_t> &set, int64_t a,  int64_t b, int64_t ans);
 static void        run_normal       (int argc, char** argv);
 
 
@@ -52,7 +52,7 @@ int main(int argc, char** argv)
     return 0;
 }
 
-int64_t range_queries_set(const std::set<int64_t>& set, int64_t a, int64_t b)
+int64_t range_queries_set(const std::set<int64_t> &set, int64_t a, int64_t b)
 {
     if (b < a) 
         return 0;
@@ -63,7 +63,7 @@ int64_t range_queries_set(const std::set<int64_t>& set, int64_t a, int64_t b)
     return std::distance(first, last);
 }
 
-static bool read_next(std::istream& in, char& mode, int64_t& a, int64_t& b)
+static bool read_next(std::istream &in, char &mode, int64_t &a, int64_t &b)
 {
     if (!(in >> mode)) return false;
 
@@ -93,14 +93,14 @@ static bool read_next(std::istream& in, char& mode, int64_t& a, int64_t& b)
 }
 
 // если режим выключен, компилятор выкинет код этой функции 
-static inline void verify_query(const std::set<int64_t>& set, int64_t a, int64_t b, int64_t ans)
+static inline void verify_query(const std::set<int64_t> &set, int64_t a, int64_t b, int64_t ans)
 {
     const auto check = range_queries_set(set, a, b);
     if (check != ans) 
     {
         std::cerr << "DBG set=" << check
-                  << " tree=" << ans
-                  << " for q " << a << ' ' << b << '\n';
+                  << " tree="   << ans
+                  << " for q "  << a << ' ' << b << '\n';
     }
 }
 

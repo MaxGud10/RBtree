@@ -7,16 +7,21 @@
 namespace Tree
 {
 
-template <typename KeyT>
+namespace detail 
+{ 
+template <typename KeyT> 
 struct Node; 
+}
 
 template <typename KeyT>
 class RB_const_iterator
 {
-    const Node<KeyT> *node_ = nullptr;
-    const Node<KeyT> *root_ = nullptr;
+    using NodeT = detail::Node<KeyT>;
 
-    const Node<KeyT> *leftmost(const Node<KeyT> *n) const
+    const NodeT *node_ = nullptr;
+    const NodeT *root_ = nullptr;
+
+    const NodeT *leftmost(const NodeT *n) const
     {
         while (n && n->left_) 
             n = n->left_;
@@ -24,7 +29,7 @@ class RB_const_iterator
         return n;
     }
 
-    const Node<KeyT> *rightmost(const Node<KeyT> *n) const
+    const NodeT *rightmost(const NodeT *n) const
     {
         while (n && n->right_) 
             n = n->right_;
@@ -40,7 +45,7 @@ public:
     using reference         = const KeyT&; 
 
     RB_const_iterator() = default;
-    RB_const_iterator(Node<KeyT> *node, const Node<KeyT> *root) 
+    RB_const_iterator(NodeT *node, const NodeT *root) 
         : node_(node), root_(root) {}
 
     reference operator* () const 
@@ -129,8 +134,7 @@ public:
         return tmp;
     }
 
-    const Node<KeyT> *get_node() const { return node_; }
-    const Node<KeyT> *get_root() const { return root_; }
+    const NodeT *get_node() const { return node_; }
 };
 
 } // namespace Tree

@@ -21,16 +21,16 @@ enum class Color
 template <typename KeyT>
 struct Node 
 {
+    KeyT  key_;
+    Color color;
+
     Node* parent_ = nullptr;     
     Node* left_   = nullptr;     
     Node* right_  = nullptr;  
 
-    Color color;
-    KeyT  key_;
-
     Node() = default;
 
-    Node(const KeyT &key, Color color = Color::red) : key_{key}, color{color} {}
+    explicit Node(const KeyT &key, Color color = Color::red) : key_{key}, color{color} {}
 };
 
 template <typename KeyT>
@@ -141,17 +141,17 @@ class Red_black_tree
         if (new_root->left_)
             new_root->left_->parent_ = pivot_node;
 
-        Node<KeyT>* parent_of_pivot = pivot_node->parent_;
-        new_root->parent_           = parent_of_pivot;
+        Node<KeyT>* parent_of_pivot  = pivot_node->parent_;
+        new_root->parent_            = parent_of_pivot;
 
         if (!parent_of_pivot)
             root_ = new_root;
 
         else if (pivot_node == parent_of_pivot->left_)
-            parent_of_pivot->left_ = new_root;
+            parent_of_pivot->left_   = new_root;
 
         else
-            parent_of_pivot->right_ = new_root;
+            parent_of_pivot->right_  = new_root;
 
         new_root->left_ = pivot_node;
                           pivot_node->parent_ = new_root;
@@ -171,17 +171,17 @@ class Red_black_tree
         if (new_root->right_)
             new_root->right_->parent_ = pivot_node;
 
-        Node<KeyT>* parent_of_pivot = pivot_node->parent_;
-        new_root->parent_           = parent_of_pivot;
+        Node<KeyT>* parent_of_pivot   = pivot_node->parent_;
+        new_root->parent_             = parent_of_pivot;
 
         if (!parent_of_pivot)
             root_ = new_root;
 
         else if (pivot_node == parent_of_pivot->right_)
-            parent_of_pivot->right_ = new_root;
+            parent_of_pivot->right_   = new_root;
 
         else
-            parent_of_pivot->left_ = new_root;
+            parent_of_pivot->left_    = new_root;
 
         new_root->right_ = pivot_node;
                            pivot_node->parent_ = new_root;
@@ -217,7 +217,6 @@ public:
     Red_black_tree(const Red_black_tree&)            = delete;
     Red_black_tree& operator=(const Red_black_tree&) = delete;
 
-
     Red_black_tree(Red_black_tree&& other) noexcept : root_(std::exchange(other.root_, nullptr)) {}
 
     Red_black_tree& operator=(Red_black_tree&& other) noexcept
@@ -232,53 +231,7 @@ public:
         return *this;
     }
 
-    const Node<KeyT>* get_root() const { return root_; }
-
-
-    // вставка ключа
-    // void insert_elem(const KeyT key)
-    // {
-    //     Node<KeyT>* parent  = nullptr;
-    //     Node<KeyT>* current = root_;
-
-    //     while (current)
-    //     {
-    //         parent = current;
-    //         if (key < current->key_)
-    //             current = current->left_;
-
-    //         else if (key > current->key_)
-    //             current = current->right_;
-                
-    //         else
-    //             return; 
-    //     }
-
-    //     // cоздаем новый узел и привязать
-    //     Node<KeyT>* new_node          = new Node<KeyT>(key, Color::red);
-    //                 new_node->parent_ = parent;
-
-    //     if (!parent)
-    //     {
-    //         root_        = new_node;     // первый узел
-    //         root_->color = Color::black; // корень всегда чёрный
-
-    //         return;
-    //     }
-
-    //     else if (key < parent->key_)
-    //     {
-    //         parent->left_ = new_node;
-    //     }
-
-    //     else
-    //     {
-    //         parent->right_ = new_node;
-    //     }
-
-    //     fix_insert(new_node); // балансировка 
-    // }
-
+    const Node<KeyT> *get_root() const { return root_; }
 
     // вставка ключа
     void insert_elem(const KeyT key)
@@ -338,23 +291,21 @@ public:
         }
     }
 
-
-
     const_iterator begin() const 
     {
-        Node<KeyT>* node = root_;
+        Node<KeyT> *node = root_;
         if (!node)
-            return const_iterator(nullptr);
+            return const_iterator(nullptr, root_);
 
         while (node->left_)
             node = node->left_;
 
-        return const_iterator(node);
+        return const_iterator(node, root_);
     }
 
     const_iterator end() const
     {
-        return const_iterator(nullptr);
+        return const_iterator(nullptr, root_);
     }
 
     uint64_t range_queries(const KeyT key1, const KeyT key2) const 
@@ -413,74 +364,13 @@ private:
 public:
     const_iterator lower_bound(const KeyT& key) const
     {
-        return const_iterator(lower_bound_node(key));
+        return const_iterator(lower_bound_node(key), root_);
     }
 
     const_iterator upper_bound(const KeyT& key) const
     {
-        return const_iterator(upper_bound_node(key));
+        return const_iterator(upper_bound_node(key), root_);
     }
-
-
 };
 
 }; // namespace Tree
-
-
-
-namespace RangeQueries 
-{
-
-// template<typename KeyT>
-// class Range_queries 
-// {
-//     Tree::Red_black_tree<KeyT> rb_tree;
-
-// public:
-//     const Tree::Red_black_tree<KeyT>& get_tree() const {return rb_tree;}
-
-//     void add_element(const KeyT& key)
-//     {
-//         rb_tree.insert_elem(key);
-//     }
-
-//     void add_element(std::istream& in) 
-//     {
-//         KeyT key;
-        
-//         if (!(in >> key))
-//         {
-//             std::cerr << "WARN: failed to read key from stdin\n";
-
-//             return;
-//         }
-
-//         rb_tree.insert_elem(key);
-//     }
-
-
-//     int64_t find_range_elements(KeyT a, KeyT b) const 
-//     {
-//         if (b <= a) // README FIX 
-//         {
-//             return 0;
-//         }
-//         return static_cast<int64_t>(rb_tree.range_queries(a, b));
-//     }
-
-//     int64_t find_range_elements(std::istream& in) 
-//     {
-//         KeyT a{}, b{};
-
-//         if (!(in >> a >> b)) 
-//         {
-//             std::cerr << "WARN: failed to read range from stdin\n";
-
-//             return 0;
-//         }
-
-//         return find_range_elements(a, b); 
-//     }
-// };
-
-} // namespace RangeQueries

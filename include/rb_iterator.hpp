@@ -13,25 +13,20 @@ struct Node;
 template <typename KeyT>
 class RB_const_iterator
 {
-    const Node<KeyT>* node_ = nullptr;
+    const Node<KeyT> *node_ = nullptr;
+    const Node<KeyT> *root_ = nullptr;
 
-    const Node<KeyT>* leftmost(const Node<KeyT>* n) const
+    const Node<KeyT> *leftmost(const Node<KeyT> *n) const
     {
-        if (!n) 
-            return nullptr;
-
-        while (n->left_) 
+        while (n && n->left_) 
             n = n->left_;
             
         return n;
     }
 
-    const Node<KeyT>* rightmost(const Node<KeyT>* n) const
+    const Node<KeyT> *rightmost(const Node<KeyT> *n) const
     {
-        if (!n) 
-            return nullptr;
-
-        while (n->right_) 
+        while (n && n->right_) 
             n = n->right_;
 
         return n;
@@ -44,25 +39,27 @@ public:
     using pointer           = const KeyT*; 
     using reference         = const KeyT&; 
 
-             RB_const_iterator() = default;
-    explicit RB_const_iterator(Node<KeyT>* node) : node_(node) {}
+    RB_const_iterator() = default;
+    RB_const_iterator(Node<KeyT> *node, const Node<KeyT> *root) 
+        : node_(node), root_(root) {}
 
-    const KeyT& operator* () const 
+    reference operator* () const 
     {
         assert(node_ && "dereferencing end() iterator");
         return node_->key_;
     }
 
-    const KeyT* operator->() const 
+    pointer operator->() const 
     {
         assert(node_ && "dereferencing end() iterator");
         return &node_->key_;
     }
 
-    bool operator==(const RB_const_iterator& other) const { return node_ == other.node_; }
-    bool operator!=(const RB_const_iterator& other) const { return node_ != other.node_; }
+    bool operator==(const RB_const_iterator &other) const { return node_ == other.node_; }
+    bool operator!=(const RB_const_iterator &other) const { return node_ != other.node_; }
 
-    RB_const_iterator& operator++()
+    // ++it
+    RB_const_iterator &operator++()
     {
         if (!node_) return *this;
 
@@ -86,9 +83,23 @@ public:
         return *this;
     }
 
-    RB_const_iterator& operator--()
+    // it++
+    RB_const_iterator operator++(int)
     {
-        if (!node_) return *this;
+        RB_const_iterator tmp = *this;
+        ++(*this);
+
+        return tmp;
+    }
+
+    // --it
+    RB_const_iterator &operator--()
+    {
+        if (!node_)
+        {
+            node_ = rightmost(root_);
+            return *this;
+        }
 
         if (node_->left_)
         {
@@ -109,7 +120,17 @@ public:
         return *this;
     }
 
-    const Node<KeyT>* get_node() const { return node_; }
+    // it--
+    RB_const_iterator operator--(int)
+    {
+        RB_const_iterator tmp = *this;
+        --(*this);
+
+        return tmp;
+    }
+
+    const Node<KeyT> *get_node() const { return node_; }
+    const Node<KeyT> *get_root() const { return root_; }
 };
 
 } // namespace Tree

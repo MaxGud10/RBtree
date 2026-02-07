@@ -39,11 +39,11 @@ static int CheckRBRec(const std::unordered_map<Key, Info>& m, std::optional<Key>
 
 #endif
 
-
 TEST(RBTreeUnit, EmptyTreeRangeIsZero){
     Tree::Red_black_tree<Key> t;
     EXPECT_EQ(t.range_queries(0, 10), 0);
     EXPECT_EQ(t.range_queries(10, 0), 0);
+    EXPECT_EQ(t.range_queries(5, 5), 0);
 }
 
 TEST(RBTreeUnit, SingleInsert) {
@@ -51,6 +51,8 @@ TEST(RBTreeUnit, SingleInsert) {
     t.insert_elem(5);
     EXPECT_EQ(t.range_queries(0, 10), 1);
     EXPECT_EQ(t.range_queries(6, 10), 0);
+    EXPECT_EQ(t.range_queries(5, 5), 0);
+    EXPECT_EQ(t.range_queries(4, 5), 1);
 }
 
 TEST(RBTreeUnit, DuplicatesIgnored) {
@@ -58,13 +60,18 @@ TEST(RBTreeUnit, DuplicatesIgnored) {
     t.insert_elem(10);
     t.insert_elem(10);
     t.insert_elem(10);
-    EXPECT_EQ(t.range_queries(10, 10), 1);
+
+    EXPECT_EQ(t.range_queries(10, 10), 0);
+    EXPECT_EQ(t.range_queries(9, 10), 1);
 }
 
 TEST(RBTreeUnit, BordersInclusive) {
     Tree::Red_black_tree<Key> t;
     for (Key x : {10, 20, 30}) t.insert_elem(x);
-    EXPECT_EQ(t.range_queries(10, 10), 1);
+
+    EXPECT_EQ(t.range_queries(10, 10), 0);
+    EXPECT_EQ(t.range_queries(9, 10), 1);
+    EXPECT_EQ(t.range_queries(10, 11), 1);
     EXPECT_EQ(t.range_queries(20, 30), 2);
     EXPECT_EQ(t.range_queries(9, 31), 3);
 }
@@ -88,10 +95,8 @@ TEST(RBTreeUnit, RBInvariantsAfterInsert) {
         if (!parent) root_key = key;
     });
 
-    ASSERT_TRUE(root_key.has_value()) << "tree should have a root";
-    ASSERT_TRUE(m.count(*root_key));
-
-    EXPECT_EQ(m.at(*root_key).color, Tree::Color::black) << "root must be black";
+    ASSERT_TRUE(root_key.has_value());
+    EXPECT_EQ(m.at(*root_key).color, Tree::Color::black);
     (void)CheckRBRec(m, root_key);
 #else
     GTEST_SKIP() << "RB invariants check requires CUSTOM_MODE_DEBUG";

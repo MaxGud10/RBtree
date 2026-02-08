@@ -13,11 +13,11 @@ namespace Tree
 {
 
 template <typename KeyT>
-class Print_tree 
+class Print_tree
 {
     // pисует один узел (для Graphviz .dot)
-    void emit_node_(std::ofstream& out,   const KeyT& key, 
-                    Color          color, bool        is_root) const 
+    void emit_node_(std::ofstream& out,   const KeyT& key,
+                    Color          color, bool        is_root) const
     {
         const char* fill = is_root ? "#5A5A5A"
                                    : (color == Color::red ? "#D85C5C" : "#BDBDBD");
@@ -30,7 +30,7 @@ class Print_tree
     }
 
     // рекурсивный обход и соединение узлов
-    void emit_nil_(std::ofstream& out, const std::string& nil_id) const 
+    void emit_nil_(std::ofstream& out, const std::string& nil_id) const
     {
         out << nil_id
             << " [shape=box, style=filled, fillcolor=\"#BDBDBD\", label=\"NULL\"];\n";
@@ -72,16 +72,16 @@ public:
 
         std::optional<KeyT> root_key;
 
-        rb_tree.debug_visit([&](const KeyT&         key,
-                                Color               color,
-                                std::optional<KeyT> parent,
-                                std::optional<KeyT> left,
-                                std::optional<KeyT> right)
+        rb_tree.debug_visit([&saw_any, &root_key](const KeyT&         key,
+                                                  Color               /*color*/,
+                                                  std::optional<KeyT> parent,
+                                                  std::optional<KeyT> /*left*/,
+                                                  std::optional<KeyT> /*right*/)
         {
-            (void)left; (void)right;
             saw_any = true;
 
-            if (!parent) root_key = key;
+            if (!parent)
+                root_key = key;
         });
 
         if (!saw_any)
@@ -91,11 +91,11 @@ public:
             return;
         }
 
-        rb_tree.debug_visit([&](const KeyT&         key,
-                                Color               color,
-                                std::optional<KeyT> parent,
-                                std::optional<KeyT> left,
-                                std::optional<KeyT> right)
+        rb_tree.debug_visit([this, &out, &nil_counter, &root_key](const KeyT&         key,
+                                                                  Color               color,
+                                                                  std::optional<KeyT> /*parent*/,
+                                                                  std::optional<KeyT> left,
+                                                                  std::optional<KeyT> right)
         {
             const bool is_root = root_key && (key == *root_key);
             emit_node_(out, key, color, is_root);
@@ -119,8 +119,6 @@ public:
                 emit_nil_(out, nil_id);
                 out << key << " -> " << nil_id << ";\n";
             }
-
-            (void)parent; 
         });
 
         out << "}\n";

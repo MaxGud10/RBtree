@@ -1,6 +1,6 @@
 #pragma once
 
-#include <cstdlib>  
+#include <cstdlib>
 #include <utility>
 #include <iterator>
 #include <memory>
@@ -16,20 +16,20 @@ enum class Color
 {
     red,
     black,
-};     
+};
 
 namespace detail
 {
 
 template <typename KeyT>
-struct Node 
+struct Node
 {
     KeyT  key_;
     Color color;
 
-    Node* parent_ = nullptr;     
-    Node* left_   = nullptr;     
-    Node* right_  = nullptr;  
+    Node* parent_ = nullptr;
+    Node* left_   = nullptr;
+    Node* right_  = nullptr;
 
     Node() = default;
 
@@ -49,7 +49,7 @@ class Red_black_tree
         return node ? node->parent_ : nullptr;
     }
 
-    NodeT *get_grandparent(NodeT *node) const 
+    NodeT *get_grandparent(NodeT *node) const
     {
         NodeT *parent_node = get_parent(node);
 
@@ -135,12 +135,12 @@ class Red_black_tree
 
     void left_rotate(NodeT *pivot_node)
     {
-        if (!pivot_node) 
+        if (!pivot_node)
             return;
 
         NodeT *new_root = pivot_node->right_;
 
-        if (!new_root) 
+        if (!new_root)
             return;
 
         pivot_node->right_ = new_root->left_;
@@ -165,12 +165,12 @@ class Red_black_tree
 
     void right_rotate(NodeT *pivot_node)
     {
-        if (!pivot_node) 
+        if (!pivot_node)
             return;
 
         NodeT *new_root = pivot_node->left_;
 
-        if (!new_root) 
+        if (!new_root)
             return;
 
         pivot_node->left_ = new_root->right_;
@@ -195,7 +195,7 @@ class Red_black_tree
 
     static void destroy_subtree(NodeT *node) noexcept
     {
-        if (!node) 
+        if (!node)
             return;
 
         destroy_subtree(node->left_);
@@ -209,7 +209,7 @@ public:
 
     Red_black_tree() = default;
 
-    Red_black_tree(KeyT key) 
+    Red_black_tree(KeyT key)
     {
         root_ = new NodeT (key, Color::black);
     }
@@ -237,15 +237,6 @@ public:
         return *this;
     }
 
-#ifdef CUSTOM_MODE_DEBUG
-    template <class Visitor>
-    void debug_visit(Visitor&& visitor) const
-    {
-        auto v = std::forward<Visitor>(visitor); 
-        debug_visit_impl_(root_, v);             
-    }
-#endif
-
     // вставка ключа
     void insert_elem(const KeyT key)
     {
@@ -265,7 +256,7 @@ public:
             else
                 return;
         }
-            
+
         // cоздаем новый узел и привязать
         NodeT *new_node = new NodeT(key, Color::red);
                new_node->parent_ = parent;
@@ -304,7 +295,7 @@ public:
         }
     }
 
-    const_iterator begin() const 
+    const_iterator begin() const
     {
         const NodeT *node = root_;
         if (!node)
@@ -321,8 +312,8 @@ public:
         return const_iterator(nullptr, root_);
     }
 
-    uint64_t range_queries(const KeyT key1, const KeyT key2) const 
-    { 
+    uint64_t range_queries(const KeyT key1, const KeyT key2) const
+    {
         if (key2 <= key1)
             return 0;
 
@@ -374,26 +365,11 @@ private:
         return res;
     }
 
+public:
 #ifdef CUSTOM_MODE_DEBUG
-    template <class Visitor>
-    void debug_visit_impl_(const NodeT* node, Visitor& visitor) const
-    {
-        if (!node) return;
-
-        visitor(
-            node->key_,
-            node->color,
-            node->parent_ ? std::optional<KeyT>(node->parent_->key_) : std::nullopt,
-            node->left_   ? std::optional<KeyT>(node->left_  ->key_) : std::nullopt,
-            node->right_  ? std::optional<KeyT>(node->right_ ->key_) : std::nullopt
-        );
-
-        debug_visit_impl_(node->left_,  visitor);
-        debug_visit_impl_(node->right_, visitor);
-    }
+    const NodeT* debug_root() const noexcept { return root_; } // только для internal debug tools
 #endif
 
-public:
     const_iterator lower_bound(const KeyT& key) const
     {
         return const_iterator(lower_bound_node(key), root_);

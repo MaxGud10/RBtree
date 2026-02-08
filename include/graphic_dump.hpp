@@ -15,30 +15,63 @@ namespace Tree
 template <typename KeyT>
 class Print_tree
 {
+    using NodeT = Tree::detail::Node<KeyT>;
+
     // pисует один узел (для Graphviz .dot)
-    void emit_node_(std::ofstream& out,   const KeyT& key,
-                    Color          color, bool        is_root) const
+    void emit_node_(const NodeT &node, std::ofstream &out, bool is_root) const
     {
         const char* fill = is_root ? "#5A5A5A"
-                                   : (color == Color::red ? "#D85C5C" : "#BDBDBD");
+                                   : (node.color == Color::red ? "#D85C5C" : "#BDBDBD");
         const char* font = is_root ? "white" : "black";
 
-        out << key
+        out << node.key_
             << " [shape=Mrecord, style=filled, fillcolor=\"" << fill
             << "\", fontcolor=\"" << font
-            << "\", label=\"{ key: " << key << " }\" ];\n";
+            << "\", label=\"{ key: " << node.key_ << " }\" ];\n";
     }
 
     // рекурсивный обход и соединение узлов
-    void emit_nil_(std::ofstream& out, const std::string& nil_id) const
+    void emit_nil_(std::ofstream &out, const std::string &nil_id) const
     {
         out << nil_id
             << " [shape=box, style=filled, fillcolor=\"#BDBDBD\", label=\"NULL\"];\n";
     }
 
+    void print_(const NodeT   &node,
+                std::ofstream &out,
+                std::size_t   &nil_counter,
+                bool          is_root = false) const
+    {
+        emit_node_(node, out, is_root);
+
+        if (node.left_)
+        {
+            out << node.key_ << " -> " << node.left_->key_ << ";\n";
+            print_(*node.left_, out, nil_counter, false);
+        }
+        else
+        {
+            const std::string nil_id = "nilL_" + std::to_string(nil_counter++);
+            emit_nil_(out, nil_id);
+            out << node.key_ << " -> " << nil_id << ";\n";
+        }
+
+        if (node.right_)
+        {
+            out << node.key_ << " -> " << node.right_->key_ << ";\n";
+            print_(*node.right_, out, nil_counter, false);
+        }
+        else
+        {
+            const std::string nil_id = "nilR_" + std::to_string(nil_counter++);
+            emit_nil_(out, nil_id);
+            out << node.key_ << " -> " << nil_id << ";\n";
+        }
+    }
+
 public:
-    void dump(const Tree::Red_black_tree<KeyT>& rb_tree,
-              const std::string& dot_path     = "graphviz/file_graph.dot",
+    void dump(const Tree::Red_black_tree<KeyT> &rb_tree,
+              const std::string &dot_path     = "graphviz/file_graph.dot",
               const std::string& /*png_path*/ = "graphviz/tree_graph.png",
               bool /*auto_open*/ = true) const
     {
@@ -67,59 +100,16 @@ public:
                "node  [shape=record, style=filled];\n"
                "edge  [color=black, arrowsize=0.8];\n";
 
-        std::size_t nil_counter = 0;
-        bool        saw_any     = false;
-
-        std::optional<KeyT> root_key;
-
-        rb_tree.debug_visit([&saw_any, &root_key](const KeyT&         key,
-                                                  Color               /*color*/,
-                                                  std::optional<KeyT> parent,
-                                                  std::optional<KeyT> /*left*/,
-                                                  std::optional<KeyT> /*right*/)
-        {
-            saw_any = true;
-
-            if (!parent)
-                root_key = key;
-        });
-
-        if (!saw_any)
+        const NodeT* root = rb_tree.debug_root();
+        if (!root)
         {
             out << "empty_tree [label=\"EMPTY TREE\", shape=box, style=filled, fillcolor=\"#CCCCCC\"];\n";
             out << "}\n";
             return;
         }
 
-        rb_tree.debug_visit([this, &out, &nil_counter, &root_key](const KeyT&         key,
-                                                                  Color               color,
-                                                                  std::optional<KeyT> /*parent*/,
-                                                                  std::optional<KeyT> left,
-                                                                  std::optional<KeyT> right)
-        {
-            const bool is_root = root_key && (key == *root_key);
-            emit_node_(out, key, color, is_root);
-
-            if (left)
-                out << key << " -> " << *left << ";\n";
-
-            else
-            {
-                const std::string nil_id = "nilL_" + std::to_string(nil_counter++);
-                emit_nil_(out, nil_id);
-                out << key << " -> " << nil_id << ";\n";
-            }
-
-            if (right)
-                out << key << " -> " << *right << ";\n";
-
-            else
-            {
-                const std::string nil_id = "nilR_" + std::to_string(nil_counter++);
-                emit_nil_(out, nil_id);
-                out << key << " -> " << nil_id << ";\n";
-            }
-        });
+        std::size_t nil_counter = 0;
+        print_(*root, out, nil_counter, true);
 
         out << "}\n";
         out.close();

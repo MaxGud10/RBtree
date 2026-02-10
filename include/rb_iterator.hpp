@@ -7,10 +7,10 @@
 namespace Tree
 {
 
-namespace detail 
-{ 
-template <typename KeyT> 
-struct Node; 
+namespace detail
+{
+template <typename KeyT>
+struct Node;
 }
 
 template <typename KeyT>
@@ -19,19 +19,20 @@ class RB_const_iterator
     using NodeT = detail::Node<KeyT>;
 
     const NodeT *node_ = nullptr;
-    const NodeT *root_ = nullptr;
+    const NodeT* min_  = nullptr;
+    const NodeT* max_  = nullptr;
 
     const NodeT *leftmost(const NodeT *n) const
     {
-        while (n && n->left_) 
+        while (n && n->left_)
             n = n->left_;
-            
+
         return n;
     }
 
     const NodeT *rightmost(const NodeT *n) const
     {
-        while (n && n->right_) 
+        while (n && n->right_)
             n = n->right_;
 
         return n;
@@ -41,20 +42,20 @@ public:
     using iterator_category = std::bidirectional_iterator_tag;
     using value_type        = KeyT;
     using difference_type   = std::ptrdiff_t;
-    using pointer           = const KeyT*; 
-    using reference         = const KeyT&; 
+    using pointer           = const KeyT*;
+    using reference         = const KeyT&;
 
     RB_const_iterator() = default;
-    RB_const_iterator(NodeT *node, const NodeT *root) 
-        : node_(node), root_(root) {}
+    RB_const_iterator(NodeT *node, const NodeT *minv, const NodeT *maxv)
+        : node_(node), min_(minv), max_(maxv) {}
 
-    reference operator* () const 
+    reference operator* () const
     {
         assert(node_ && "dereferencing end() iterator");
         return node_->key_;
     }
 
-    pointer operator->() const 
+    pointer operator->() const
     {
         assert(node_ && "dereferencing end() iterator");
         return &node_->key_;
@@ -66,25 +67,9 @@ public:
     // ++it
     RB_const_iterator &operator++()
     {
-        if (!node_) return *this;
+        assert(node_ && "++end() is UB");
 
-        if (node_->right_)
-        {
-            node_ = leftmost(node_->right_);
-
-            return *this;
-        }
-
-        auto cur = node_;
-        auto p   = node_->parent_;
-
-        while (p && cur == p->right_)
-        {
-            cur = p;
-            p   = p->parent_;
-        }
-
-        node_ = p;
+        node_ = node_->next_;
         return *this;
     }
 
@@ -102,26 +87,13 @@ public:
     {
         if (!node_)
         {
-            node_ = rightmost(root_);
+            node_  = max_;
             return *this;
         }
 
-        if (node_->left_)
-        {
-            node_ = rightmost(node_->left_);
-            return *this;
-        }
+        assert(node_ != min_ && "--begin() is UB");
+        node_ = node_->prev_;
 
-        auto cur = node_;
-        auto p   = node_->parent_;
-
-        while (p && cur == p->left_)
-        {
-            cur = p;
-            p   = p->parent_;
-        }
-
-        node_ = p;
         return *this;
     }
 

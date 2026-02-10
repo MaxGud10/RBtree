@@ -17,7 +17,7 @@ class Print_tree
 {
     using NodeT = Tree::detail::Node<KeyT>;
 
-    // pисует один узел (для Graphviz .dot)
+    // draws a single node (for Graphviz .dot)
     void emit_node_(const NodeT &node, std::ofstream &out, bool is_root) const
     {
         const char* fill = is_root ? "#5A5A5A"
@@ -30,7 +30,7 @@ class Print_tree
             << "\", label=\"{ key: " << node.key_ << " }\" ];\n";
     }
 
-    // рекурсивный обход и соединение узлов
+    // recursive traversal and node connection
     void emit_nil_(std::ofstream &out, const std::string &nil_id) const
     {
         out << nil_id

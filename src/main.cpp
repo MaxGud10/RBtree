@@ -54,7 +54,7 @@ int main(int argc, char** argv)
 
 int64_t range_queries_set(const std::set<int64_t> &set, int64_t a, int64_t b)
 {
-    if (b < a) 
+    if (b < a)
         return 0;
 
     auto first = set.lower_bound(a);
@@ -67,9 +67,9 @@ static bool read_next(std::istream &in, char &mode, int64_t &a, int64_t &b)
 {
     if (!(in >> mode)) return false;
 
-    if (mode == 'k') 
+    if (mode == 'k')
     {
-        if (!(in >> a)) 
+        if (!(in >> a))
         {
             std::cerr << "ERROR: expected key after 'k'\n";
             return false;
@@ -77,9 +77,9 @@ static bool read_next(std::istream &in, char &mode, int64_t &a, int64_t &b)
         return true;
     }
 
-    if (mode == 'q') 
+    if (mode == 'q')
     {
-        if (!(in >> a >> b)) 
+        if (!(in >> a >> b))
         {
             std::cerr << "ERROR: expected two numbers after 'q'\n";
             return false;
@@ -92,11 +92,11 @@ static bool read_next(std::istream &in, char &mode, int64_t &a, int64_t &b)
     return false;
 }
 
-// если режим выключен, компилятор выкинет код этой функции 
+// if the mode is off, the compiler will throw the code of this function
 static inline void verify_query(const std::set<int64_t> &set, int64_t a, int64_t b, int64_t ans)
 {
     const auto check = range_queries_set(set, a, b);
-    if (check != ans) 
+    if (check != ans)
     {
         std::cerr << "DBG set=" << check
                   << " tree="   << ans
@@ -122,7 +122,7 @@ static void run_normal(int argc, char** argv)
 
     while (read_next(std::cin, mode, a, b))
     {
-        if (mode == 'k') 
+        if (mode == 'k')
         {
             tree.insert_elem(a);
 

@@ -3,6 +3,7 @@
 #include <cstdlib>
 #include <utility>
 #include <iterator>
+#include <memory>
 #include <vector>
 
 
@@ -31,6 +32,9 @@ struct Node
     Node* left_   = nullptr;
     Node* right_  = nullptr;
 
+    Node* prev_   = nullptr;
+    Node* next_   = nullptr;
+
     Node() = default;
 
     Node(const KeyT &key, Color color = Color::red) : key_{key}, color{color} {}
@@ -43,6 +47,8 @@ class Red_black_tree
     using NodeT  = detail::Node<KeyT>;
 
     NodeT *root_ = nullptr;
+    NodeT *min_  = nullptr;
+    NodeT *max_  = nullptr;
 
     NodeT *get_parent(NodeT *node) const
     {
@@ -57,7 +63,7 @@ class Red_black_tree
     }
 
     // balance after insert
-    void fix_insert(NodeT* node)
+    void fix_insert(NodeT *node) noexcept
     {
         while (node && node != root_)
         {
@@ -79,15 +85,15 @@ class Red_black_tree
             root_->color = Color::black;
     }
 
-    void recolor_parent_uncle_grand_(NodeT* parent, NodeT* uncle, NodeT* grand)
+    void recolor_parent_uncle_grand_(NodeT *parent, NodeT *uncle, NodeT *grand) noexcept
     {
         parent->color = Color::black;
-        uncle->color  = Color::black;
-        grand->color  = Color::red;
+        uncle ->color = Color::black;
+        grand ->color = Color::red;
     }
 
     // parent is left child of grandparent
-    NodeT* fix_insert_parent_is_left_(NodeT* node, NodeT* parent, NodeT* grand)
+    NodeT* fix_insert_parent_is_left_(NodeT *node, NodeT *parent, NodeT *grand) noexcept
     {
         NodeT* uncle = grand->right_;
 
@@ -101,23 +107,23 @@ class Red_black_tree
         // node is right child => rotate parent to make a line
         if (node == parent->right_)
         {
-            node = parent;
+            node   = parent;
             left_rotate(node);
-            parent = get_parent(node);
+            parent = get_parent     (node);
             grand  = get_grandparent(node);
             if (!parent || !grand) return node;
         }
 
         // rotate grand, recolor
         parent->color = Color::black;
-        grand->color  = Color::red;
+        grand ->color = Color::red;
         right_rotate(grand);
 
         return node;
     }
 
     // parent is right child of grandparent
-    NodeT* fix_insert_parent_is_right_(NodeT* node, NodeT* parent, NodeT* grand)
+    NodeT* fix_insert_parent_is_right_(NodeT *node, NodeT *parent, NodeT *grand) noexcept
     {
         NodeT* uncle = grand->left_;
 
@@ -129,21 +135,21 @@ class Red_black_tree
 
         if (node == parent->left_)
         {
-            node = parent;
+            node   = parent;
             right_rotate(node);
-            parent = get_parent(node);
+            parent = get_parent     (node);
             grand  = get_grandparent(node);
             if (!parent || !grand) return node;
         }
 
         parent->color = Color::black;
-        grand->color  = Color::red;
+        grand ->color = Color::red;
         left_rotate(grand);
 
         return node;
     }
 
-    void left_rotate(NodeT *pivot_node)
+    void left_rotate(NodeT *pivot_node) noexcept
     {
         if (!pivot_node)
             return;
@@ -173,7 +179,7 @@ class Red_black_tree
                           pivot_node->parent_ = new_root;
     }
 
-    void right_rotate(NodeT *pivot_node)
+    void right_rotate(NodeT *pivot_node) noexcept
     {
         if (!pivot_node)
             return;
@@ -203,7 +209,7 @@ class Red_black_tree
                            pivot_node->parent_ = new_root;
     }
 
-    static void destroy_subtree(NodeT* root) noexcept
+    static void destroy_subtree(NodeT *root) noexcept
     {
         if (!root)
             return;
@@ -211,8 +217,8 @@ class Red_black_tree
         std::vector<NodeT*> st;
         st.reserve(64);
 
-        NodeT* cur          = root;
-        NodeT* last_visited = nullptr;
+        NodeT *cur          = root;
+        NodeT *last_visited = nullptr;
 
         while (cur || !st.empty())
         {
@@ -224,7 +230,7 @@ class Red_black_tree
 
             else
             {
-                NodeT* peek = st.back();
+                NodeT *peek = st.back();
 
                 if (peek->right_ && last_visited != peek->right_)
                     cur = peek->right_;
@@ -232,24 +238,12 @@ class Red_black_tree
                 {
                     st.pop_back();
                     last_visited = peek;
-                    
+
                     delete peek;
                 }
             }
         }
     }
-
-
-    // static void destroy_subtree(NodeT *node) noexcept
-    // {
-    //     if (!node)
-    //         return;
-
-    //     destroy_subtree(node->left_);
-    //     destroy_subtree(node->right_);
-
-    //     delete node;
-    // }
 
 public:
     using const_iterator = RB_const_iterator<KeyT>;
@@ -257,9 +251,8 @@ public:
     Red_black_tree() = default;
 
     Red_black_tree(KeyT key)
-    {
-        root_ = new NodeT (key, Color::black);
-    }
+        : root_(new NodeT(key, Color::black)), min_(root_), max_(root_) {}
+
 
     ~Red_black_tree()
     {
@@ -270,93 +263,89 @@ public:
     Red_black_tree(const Red_black_tree&)            = delete;
     Red_black_tree &operator=(const Red_black_tree&) = delete;
 
-    Red_black_tree(Red_black_tree&& other) noexcept : root_(std::exchange(other.root_, nullptr)) {}
+    Red_black_tree(Red_black_tree&& other) noexcept
+        : root_(std::exchange(other.root_, nullptr)),
+          min_ (std::exchange(other.min_,  nullptr)),
+          max_ (std::exchange(other.max_,  nullptr)) {}
 
-    Red_black_tree &operator=(Red_black_tree&& other) noexcept
+    Red_black_tree &operator=(Red_black_tree &&other) noexcept
     {
         if (this != &other)
         {
             destroy_subtree(root_);
 
             root_ = std::exchange(other.root_, nullptr);
+            min_  = std::exchange(other.min_,  nullptr);
+            max_  = std::exchange(other.max_,  nullptr);
         }
 
         return *this;
     }
 
-    // вставка ключа
+    // inserting key
     void insert_elem(const KeyT key)
     {
         NodeT *parent  = nullptr;
         NodeT *current = root_;
+
+        NodeT *pred    = nullptr;
+        NodeT *succ    = nullptr;
 
         while (current)
         {
             parent = current;
 
             if (key < current->key_)
+            {
+                succ    = current;
                 current = current->left_;
-
+            }
             else if (key > current->key_)
+            {
+                pred    = current;
                 current = current->right_;
-
+            }
             else
                 return;
         }
 
-        // cоздаем новый узел и привязать
         NodeT *new_node = new NodeT(key, Color::red);
                new_node->parent_ = parent;
 
         if (!parent)
         {
-            root_        = new_node;     // первый узел
-            root_->color = Color::black; // корень всегда чёрный
+            root_        = new_node;     // first node
+            root_->color = Color::black; // root always black
+            min_ = max_  = root_;
 
             return;
         }
         else if (key < parent->key_)
-        {
             parent->left_ = new_node;
-        }
+
         else
-        {
             parent->right_ = new_node;
-        }
 
-        try
-        {
-            fix_insert(new_node);
-        }
-        catch (...)
-        {
-            if (parent->left_ == new_node)
-                parent->left_ = nullptr;
+        new_node->prev_ = pred;
+        new_node->next_ = succ;
 
-            else if (parent->right_ == new_node)
-                parent->right_ = nullptr;
+        if (pred) pred->next_ = new_node;
+        else      min_        = new_node;
 
-            delete new_node;
+        if (succ) succ->prev_ = new_node;
+        else      max_        = new_node;
 
-            throw;
-        }
+        fix_insert(new_node);
     }
 
     const_iterator begin() const
     {
-        const NodeT *node = root_;
-        if (!node)
-            return const_iterator(nullptr, root_);
-
-        while (node->left_)
-            node = node->left_;
-
-        return const_iterator(node, root_);
+        return const_iterator(min_, min_, max_);
     }
 
     const_iterator end() const
     {
-        return const_iterator(nullptr, root_);
+        return const_iterator(nullptr, min_, max_);
     }
 
     uint64_t range_queries(const KeyT key1, const KeyT key2) const
@@ -372,7 +361,7 @@ public:
 
 
 private:
-    NodeT *lower_bound_node(const KeyT& key) const
+    NodeT *lower_bound_node(const KeyT &key) const
     {
         NodeT *cur = root_;
         NodeT *res = nullptr;
@@ -392,7 +381,7 @@ private:
         return res;
     }
 
-    NodeT *upper_bound_node(const KeyT& key) const
+    NodeT *upper_bound_node(const KeyT &key) const
     {
         NodeT *cur = root_;
         NodeT *res = nullptr;
@@ -414,17 +403,17 @@ private:
 
 public:
 #ifdef CUSTOM_MODE_DEBUG
-    const NodeT* debug_root() const noexcept { return root_; } // только для internal debug tools
+    const NodeT *debug_root() const noexcept { return root_; } // for internal debugging tools only
 #endif
 
-    const_iterator lower_bound(const KeyT& key) const
+    const_iterator lower_bound(const KeyT &key) const
     {
-        return const_iterator(lower_bound_node(key), root_);
+        return const_iterator(lower_bound_node(key), min_, max_);
     }
 
-    const_iterator upper_bound(const KeyT& key) const
+    const_iterator upper_bound(const KeyT &key) const
     {
-        return const_iterator(upper_bound_node(key), root_);
+        return const_iterator(upper_bound_node(key), min_, max_);
     }
 };
 

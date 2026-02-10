@@ -50,7 +50,7 @@ int main(int argc, char** argv)
     const std::size_t batch_sz     = static_cast<std::size_t>(std::max(1LL, batch_sz_raw));
 
     Tree::Red_black_tree<int64_t> tree;
-    
+
     std::set<int64_t> set;
 
     ns our_insert_time{0}, our_query_time{0};
@@ -74,7 +74,7 @@ int main(int argc, char** argv)
     {
         switch (mode)
         {
-            case 'k': 
+            case 'k':
             {
                 if (!(std::cin >> key))
                 {
@@ -97,7 +97,7 @@ int main(int argc, char** argv)
                 break;
             }
 
-            case 'q': 
+            case 'q':
             {
                 if (!(std::cin >> a >> b))
                 {
@@ -170,7 +170,7 @@ int main(int argc, char** argv)
 
 static inline int64_t range_queries_set(const std::set<int64_t> &set, int64_t a, int64_t b)
 {
-    if (b < a) 
+    if (b < a)
         return 0;
 
     auto first = set.lower_bound(a);
@@ -200,7 +200,7 @@ static inline void flush_tail(std::size_t in_batch, ns &total, Clock::time_point
         total += std::chrono::duration_cast<ns>(Clock::now() - t0);
 }
 
-// вызываются только при if constexpr(kVerifyWithSet)
+// called only when if constexpr(kVerifyWithSet)
 static inline void bench_insert_set(std::set<int64_t> &set,int64_t key, std::size_t &in_batch, ns &total, Clock::time_point &t0, std::size_t batch_sz)
 {
     start_if_first(in_batch, t0);

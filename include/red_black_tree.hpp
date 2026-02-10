@@ -3,8 +3,8 @@
 #include <cstdlib>
 #include <utility>
 #include <iterator>
-#include <memory>
-#include <optional>
+#include <vector>
+
 
 #include "rb_iterator.hpp"
 
@@ -33,7 +33,7 @@ struct Node
 
     Node() = default;
 
-    explicit Node(const KeyT &key, Color color = Color::red) : key_{key}, color{color} {}
+    Node(const KeyT &key, Color color = Color::red) : key_{key}, color{color} {}
 };
 } // namespace detail
 
@@ -56,81 +56,91 @@ class Red_black_tree
         return parent_node ? parent_node->parent_ : nullptr;
     }
 
-    // балансировка после вставки ключа
-    void fix_insert(NodeT *current_node)
+    // balance after insert
+    void fix_insert(NodeT* node)
     {
-        while (current_node && current_node != root_)
+        while (node && node != root_)
         {
-            auto parent_node      = get_parent(current_node);
-            if (!parent_node || parent_node->color != Color::red)
+            NodeT* parent = get_parent(node);
+            if (!parent || parent->color != Color::red)
                 break;
 
-            auto grandparent_node = get_grandparent(current_node);
-            if (!grandparent_node)
+            NodeT* grand = get_grandparent(node);
+            if (!grand)
                 break;
 
-            // родитель - левый ребёнок дедушки
-            if (parent_node == grandparent_node->left_)
-            {
-                auto uncle_node = grandparent_node->right_;
-
-                // if дядя красный => перекраска без поворотов
-                if (uncle_node && uncle_node->color == Color::red)
-                {
-                    parent_node->color      = Color::black;
-                    uncle_node->color       = Color::black;
-                    grandparent_node->color = Color::red;
-                    current_node            = grandparent_node;
-                }
-                else
-                {
-                    if (current_node == parent_node->right_)
-                    {
-                        current_node = parent_node;
-                        left_rotate(current_node);
-
-                        parent_node      = get_parent(current_node);
-                        grandparent_node = get_grandparent(current_node);
-                        if (!parent_node || !grandparent_node) break;
-                    }
-
-                    parent_node->color      = Color::black;
-                    grandparent_node->color = Color::red;
-                    right_rotate(grandparent_node);
-                }
-            }
-            // родитель - правый ребёнок дедушки
+            if (parent == grand->left_)
+                node = fix_insert_parent_is_left_(node, parent, grand);
             else
-            {
-                auto uncle_node = grandparent_node->left_;
-
-                if (uncle_node && uncle_node->color == Color::red)
-                {
-                    parent_node->color      = Color::black;
-                    uncle_node->color       = Color::black;
-                    grandparent_node->color = Color::red;
-                    current_node            = grandparent_node;
-                }
-                else
-                {
-                    if (current_node == parent_node->left_)
-                    {
-                        current_node = parent_node;
-                        right_rotate(current_node);
-
-                        parent_node      = get_parent(current_node);
-                        grandparent_node = get_grandparent(current_node);
-                        if (!parent_node || !grandparent_node) break;
-                    }
-
-                    parent_node->color      = Color::black;
-                    grandparent_node->color = Color::red;
-                    left_rotate(grandparent_node);
-                }
-            }
+                node = fix_insert_parent_is_right_(node, parent, grand);
         }
 
-        root_->color = Color::black;
+        if (root_)
+            root_->color = Color::black;
+    }
+
+    void recolor_parent_uncle_grand_(NodeT* parent, NodeT* uncle, NodeT* grand)
+    {
+        parent->color = Color::black;
+        uncle->color  = Color::black;
+        grand->color  = Color::red;
+    }
+
+    // parent is left child of grandparent
+    NodeT* fix_insert_parent_is_left_(NodeT* node, NodeT* parent, NodeT* grand)
+    {
+        NodeT* uncle = grand->right_;
+
+        // uncle is red => recolor and continue from grandparent
+        if (uncle && uncle->color == Color::red)
+        {
+            recolor_parent_uncle_grand_(parent, uncle, grand);
+            return grand;
+        }
+
+        // node is right child => rotate parent to make a line
+        if (node == parent->right_)
+        {
+            node = parent;
+            left_rotate(node);
+            parent = get_parent(node);
+            grand  = get_grandparent(node);
+            if (!parent || !grand) return node;
+        }
+
+        // rotate grand, recolor
+        parent->color = Color::black;
+        grand->color  = Color::red;
+        right_rotate(grand);
+
+        return node;
+    }
+
+    // parent is right child of grandparent
+    NodeT* fix_insert_parent_is_right_(NodeT* node, NodeT* parent, NodeT* grand)
+    {
+        NodeT* uncle = grand->left_;
+
+        if (uncle && uncle->color == Color::red)
+        {
+            recolor_parent_uncle_grand_(parent, uncle, grand);
+            return grand;
+        }
+
+        if (node == parent->left_)
+        {
+            node = parent;
+            right_rotate(node);
+            parent = get_parent(node);
+            grand  = get_grandparent(node);
+            if (!parent || !grand) return node;
+        }
+
+        parent->color = Color::black;
+        grand->color  = Color::red;
+        left_rotate(grand);
+
+        return node;
     }
 
     void left_rotate(NodeT *pivot_node)
@@ -193,16 +203,53 @@ class Red_black_tree
                            pivot_node->parent_ = new_root;
     }
 
-    static void destroy_subtree(NodeT *node) noexcept
+    static void destroy_subtree(NodeT* root) noexcept
     {
-        if (!node)
+        if (!root)
             return;
 
-        destroy_subtree(node->left_);
-        destroy_subtree(node->right_);
+        std::vector<NodeT*> st;
+        st.reserve(64);
 
-        delete node;
+        NodeT* cur          = root;
+        NodeT* last_visited = nullptr;
+
+        while (cur || !st.empty())
+        {
+            if (cur)
+            {
+                st.push_back(cur);
+                cur = cur->left_;
+            }
+
+            else
+            {
+                NodeT* peek = st.back();
+
+                if (peek->right_ && last_visited != peek->right_)
+                    cur = peek->right_;
+                else
+                {
+                    st.pop_back();
+                    last_visited = peek;
+                    
+                    delete peek;
+                }
+            }
+        }
     }
+
+
+    // static void destroy_subtree(NodeT *node) noexcept
+    // {
+    //     if (!node)
+    //         return;
+
+    //     destroy_subtree(node->left_);
+    //     destroy_subtree(node->right_);
+
+    //     delete node;
+    // }
 
 public:
     using const_iterator = RB_const_iterator<KeyT>;

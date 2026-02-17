@@ -18,9 +18,8 @@ class RB_const_iterator
 {
     using NodeT = detail::Node<KeyT>;
 
+    const NodeT *root_ = nullptr;
     const NodeT *node_ = nullptr;
-    const NodeT* min_  = nullptr;
-    const NodeT* max_  = nullptr;
 
     const NodeT *leftmost(const NodeT *n) const
     {
@@ -46,8 +45,8 @@ public:
     using reference         = const KeyT&;
 
     RB_const_iterator() = default;
-    RB_const_iterator(NodeT *node, const NodeT *minv, const NodeT *maxv)
-        : node_(node), min_(minv), max_(maxv) {}
+    RB_const_iterator(NodeT *node, const NodeT *root)
+        : root_(root), node_(node) {}
 
     reference operator* () const
     {
@@ -69,7 +68,16 @@ public:
     {
         assert(node_ && "++end() is UB");
 
-        node_ = node_->next_;
+        if (node_->right_thread_)
+            node_ = node_->right_;
+
+        else
+        {
+            node_ = node_->right_;
+            while (node_ && !node_->left_thread_)
+                node_ = node_->left_;
+        }
+
         return *this;
     }
 
@@ -87,12 +95,26 @@ public:
     {
         if (!node_)
         {
-            node_  = max_;
+            node_ = root_;
+
+            if (!node_)
+                return *this;
+
+            while (!node_->right_thread_)
+                node_ = node_->right_;
+
             return *this;
         }
 
-        assert(node_ != min_ && "--begin() is UB");
-        node_ = node_->prev_;
+        if (node_->left_thread_)
+            node_ = node_->left_;
+
+        else
+        {
+            node_ = node_->left_;
+            while (node_ && !node_->right_thread_)
+                node_ = node_->right_;
+        }
 
         return *this;
     }

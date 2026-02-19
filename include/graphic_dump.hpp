@@ -44,7 +44,7 @@ class Print_tree
     {
         emit_node_(node, out, is_root);
 
-        if (node.left_)
+        if (node.left_ && !node.left_is_thread)
         {
             out << node.key_ << " -> " << node.left_->key_ << ";\n";
             print_(*node.left_, out, nil_counter, false);
@@ -56,7 +56,7 @@ class Print_tree
             out << node.key_ << " -> " << nil_id << ";\n";
         }
 
-        if (node.right_)
+        if (node.right_ && !node.right_is_thread)
         {
             out << node.key_ << " -> " << node.right_->key_ << ";\n";
             print_(*node.right_, out, nil_counter, false);

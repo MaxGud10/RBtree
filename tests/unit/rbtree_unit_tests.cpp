@@ -23,23 +23,25 @@ static int CheckRBRec(const NodeT* n,
 {
     if (!n) return 1;
 
+    const NodeT* left_child  = (!n->left_is_thread  ? n->left_  : nullptr);
+    const NodeT* right_child = (!n->right_is_thread ? n->right_ : nullptr);
+
     if (min_key) EXPECT_TRUE(*min_key < n->key_) << "BST violation: key <= min";
     if (max_key) EXPECT_TRUE(n->key_ < *max_key) << "BST violation: key >= max";
 
-    if (n->color == Tree::Color::red) {
-        if (n->left_)  EXPECT_EQ(n->left_->color,  Tree::Color::black);
-        if (n->right_) EXPECT_EQ(n->right_->color, Tree::Color::black);
+    if (n->color == Tree::Color::red)
+    {
+        if (left_child)  EXPECT_EQ(left_child->color,  Tree::Color::black);
+        if (right_child) EXPECT_EQ(right_child->color, Tree::Color::black);
     }
 
-    const int lh = CheckRBRec(n->left_,  min_key, n->key_);
-    const int rh = CheckRBRec(n->right_, n->key_, max_key);
+    const int lh = CheckRBRec(left_child,  min_key, n->key_);
+    const int rh = CheckRBRec(right_child, n->key_, max_key);
 
     EXPECT_EQ(lh, rh) << "black-height mismatch at key=" << n->key_;
 
     return lh + (n->color == Tree::Color::black ? 1 : 0);
 }
-
-
 #endif
 
 TEST(RBTreeUnit, EmptyTreeRangeIsZero){

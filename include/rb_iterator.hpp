@@ -18,24 +18,8 @@ class RB_const_iterator
 {
     using NodeT = detail::Node<KeyT>;
 
-    const NodeT *root_ = nullptr;
-    const NodeT *node_ = nullptr;
-
-    const NodeT *leftmost(const NodeT *n) const
-    {
-        while (n && n->left_)
-            n = n->left_;
-
-        return n;
-    }
-
-    const NodeT *rightmost(const NodeT *n) const
-    {
-        while (n && n->right_)
-            n = n->right_;
-
-        return n;
-    }
+    const NodeT *node_   = nullptr;
+    const NodeT *header_ = nullptr;
 
 public:
     using iterator_category = std::bidirectional_iterator_tag;
@@ -45,18 +29,18 @@ public:
     using reference         = const KeyT&;
 
     RB_const_iterator() = default;
-    RB_const_iterator(NodeT *node, const NodeT *root)
-        : root_(root), node_(node) {}
+    RB_const_iterator(NodeT *node, const NodeT *header)
+        : node_(node), header_(header) {}
 
     reference operator* () const
     {
-        assert(node_ && "dereferencing end() iterator");
+        assert(node_ != header_ && "dereferencing end() iterator");
         return node_->key_;
     }
 
     pointer operator->() const
     {
-        assert(node_ && "dereferencing end() iterator");
+        assert(node_ != header_ && "dereferencing end() iterator");
         return &node_->key_;
     }
 
@@ -66,17 +50,17 @@ public:
     // ++it
     RB_const_iterator &operator++()
     {
-        assert(node_ && "++end() is UB");
+        assert(node_ != header_ && "++end() is UB");
 
-        if (node_->right_thread_)
-            node_ = node_->right_;
-
-        else
+        if (node_->right_is_thread)
         {
             node_ = node_->right_;
-            while (node_ && !node_->left_thread_)
-                node_ = node_->left_;
+            return *this;
         }
+
+        node_ = node_->right_;
+        while (node_ != header_ && !node_->left_is_thread)
+            node_ = node_->left_;
 
         return *this;
     }
@@ -93,28 +77,23 @@ public:
     // --it
     RB_const_iterator &operator--()
     {
-        if (!node_)
+        if (node_ == header_)
         {
-            node_ = root_;
-
-            if (!node_)
-                return *this;
-
-            while (!node_->right_thread_)
-                node_ = node_->right_;
-
+            node_ = header_->right_;
             return *this;
         }
 
-        if (node_->left_thread_)
-            node_ = node_->left_;
+        assert(node_ != header_->left_ && "--begin() is UB");
 
-        else
+        if (node_->left_is_thread)
         {
             node_ = node_->left_;
-            while (node_ && !node_->right_thread_)
-                node_ = node_->right_;
+            return *this;
         }
+
+        node_ = node_->left_;
+        while (node_ != header_ && !node_->right_is_thread)
+            node_ = node_->right_;
 
         return *this;
     }

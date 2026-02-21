@@ -44,11 +44,11 @@ jobs:
       - name: Conan install deps (${{ matrix.config.build_type }})
         run: |
           conan profile detect --force
-          conan install . --output-folder=third_party --build=missing -s build_type=${{ matrix.config.build_type }}
+          conan install . -of build -s build_type=${{ matrix.config.build_type }} --build=missing
 
       - name: Configure (CMake) - ${{ matrix.config.name }}
         run: |
-          cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }} -DSET_MODE_ENABLED=${{ matrix.config.set_mode }} -DRBTREE_DEBUG_DOT=${{ matrix.config.debug_dot }} -DCMAKE_TOOLCHAIN_FILE=third_party/build/${{ matrix.config.build_type }}/generators/conan_toolchain.cmake
+          cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }} -DSET_MODE_ENABLED=${{ matrix.config.set_mode }} -DRBTREE_DEBUG_DOT=${{ matrix.config.debug_dot }} -DCMAKE_TOOLCHAIN_FILE=build/conan_toolchain.cmake
 
       - name: Build
         run: cmake --build build -- -k 0

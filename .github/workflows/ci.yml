@@ -44,37 +44,27 @@ jobs:
       - name: Conan install deps (${{ matrix.config.build_type }})
         run: |
           conan profile detect --force
-          conan install . \
-            --output-folder=third_party \
-            --build=missing \
-            -s build_type=${{ matrix.config.build_type }}
+          conan install . --output-folder=third_party --build=missing -s build_type=${{ matrix.config.build_type }}
 
       - name: Configure (CMake) - ${{ matrix.config.name }}
         run: |
-          cmake -S . -B build \
-            -G Ninja \
-            -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }} \
-            -DSET_MODE_ENABLED=${{ matrix.config.set_mode }} \
-            -DRBTREE_DEBUG_DOT=${{ matrix.config.debug_dot }} \
-            -DCMAKE_TOOLCHAIN_FILE=third_party/build/${{ matrix.config.build_type }}/generators/conan_toolchain.cmake
+          cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }} -DSET_MODE_ENABLED=${{ matrix.config.set_mode }} -DRBTREE_DEBUG_DOT=${{ matrix.config.debug_dot }} -DCMAKE_TOOLCHAIN_FILE=third_party/build/${{ matrix.config.build_type }}/generators/conan_toolchain.cmake
 
       - name: Build
-        run: cmake --build build --config ${{ matrix.config.build_type }} -- -k 0
+        run: cmake --build build -- -k 0
 
       - name: Run ctest
         working-directory: build
         env:
           CTEST_OUTPUT_ON_FAILURE: 1
-        run: ctest -C ${{ matrix.config.build_type }} --output-on-failure
+        run: ctest --output-on-failure
 
       - name: Run rb_tree with Graphviz dump (Debug only)
         if: ${{ matrix.config.build_type == 'Debug' }}
         run: |
+          mkdir -p graphviz
           ./build/rb_tree --gv-file=graphviz/ci_tree.dot < tests/end2end/small_input.txt
-          if [ ! -f graphviz/ci_tree.dot ]; then
-            echo "ERROR: graphviz/ci_tree.dot was not created"
-            exit 1
-          fi
+          test -f graphviz/ci_tree.dot
 
       - name: Upload Graphviz artifacts (if present)
         uses: actions/upload-artifact@v4

@@ -5,6 +5,3 @@ cxxopts/3.2.0
 [generators]
 CMakeDeps
 CMakeToolchain
-
-[layout]
-cmake_layout

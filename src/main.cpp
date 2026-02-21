@@ -19,7 +19,7 @@ static std::string get_gv_file_arg(int argc, char** argv, const char* def_name)
 {
     cxxopts::Options options("rb_tree", "Red-black tree visualizer");
     options.add_options()
-        ("f,gv-file",   "Path to .dot output file", cxxopts::value<std::string>())
+        ("f,gv-file",   "Path to .dot output file",  cxxopts::value<std::string>())
         ("p,gv-prefix", "Prefix for .dot file name", cxxopts::value<std::string>())
         ("h,help",      "Print help");
 

@@ -6,16 +6,16 @@
 ## Опискание
 
 Красно-чёрное дерево — двоичное дерево поиска, у которого каждому узлу сопоставлен дополнительный атрибут - цвет и для которого выполняются следубщие свойства:
-- Каждый узел промаркирован красным или черным цветом. 
-- Корень и конечные узлы (листья) дерева - черные. 
+- Каждый узел промаркирован красным или черным цветом.
+- Корень и конечные узлы (листья) дерева - черные.
 - У красного узла родительский узел - черный.
 - Все простые пути из любого узла x до листьев содержат одинаковое количество черных узлов.
 
-Все листья дерева являются фиктивными и не содеражат данных, но относятся к дереву и являются чёрными. 
+Все листья дерева являются фиктивными и не содеражат данных, но относятся к дереву и являются чёрными.
 
 
 
-# Описание проекта 
+# Описание проекта
 
 ## Ввод
 - Программа получает ключи и запросы от стандартных входных данных.
@@ -55,7 +55,7 @@ q 10 20
 
 -----------------------------------------
 
-Создаются два бинарных файла 
+Создаются два бинарных файла
 - `rb_tree` читает команды из stdin (k X, q A B), отвечает на запросы.
 Если собрать с флагом `-DSET_MODE_ENABLED=ON`, дополнительно проверяет ответы через `std::set` и пишет расхождения в stderr
 - `rb_tree_bench` читает тот же формат входа, меряет время вставок/запросов для твоего дерева и (при SET_MODE_ENABLED для этого бинарника — он уже включён в CMake) для `std::set`. Усредняет по батчам.
@@ -68,7 +68,7 @@ q 10 20
 - cxxopts - для парсинга аргументов командной строки
 
 
-### Запуск проекта 
+### Запуск проекта
 
 ```bash
 git clone https://github.com/MaxGud10/RBtree
@@ -83,20 +83,20 @@ python3 -m venv .venv && source .venv/bin/activate && pip3 install conan
 
 Установим зависимости проекта с помощью Conan:
 ```bash
-conan install . --output-folder=third_party --build=missing
+conan install . -of third_party -s build_type=Release --build=missing
 ```
 
 
  - `Основной режимy`
 ```bash
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DSET_MODE_ENABLED=OFF
+cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=./third_party/conan_toolchain.cmake
 cmake --build build
 ./build/rb_tree < tests/end2end/small_input.txt
 ```
 
 - `Режим проверки с std::set`
 ```bash
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DSET_MODE_ENABLED=ON
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=third_party/conan_toolchain.cmake -DSET_MODE_ENABLED=ON
 cmake --build build
 ./build/rb_tree < tests/end2end/small_input.txt
 
@@ -106,7 +106,7 @@ cmake --build build
 
 - `Режим замера времени`
 ```bash
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=third_party/conan_toolchain.cmake
 cmake --build build
 ./build/rb_tree_bench < tests/end2end/big_input.txt 1>/dev/null
 # Дополнительно можно задать размер батча:
@@ -118,7 +118,9 @@ cmake --build build
 При сборке в Debug (`-DCMAKE_BUILD_TYPE=Debug`) бинарь rb_tree автоматически создает `.dot`- файл с описанием деререва, который можно потом визуализировать через `Graphviz`.
 
 ```bash
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DSET_MODE_ENABLED=ON
+conan install . -of third_party -s build_type=Debug --build=missing
+
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_TOOLCHAIN_FILE=third_party/conan_toolchain.cmake
 cmake --build build
 ./build/rb_tree --gv-file=graphviz/file_graph.dot < tests/end2end/small_input.txt
 ```
@@ -170,7 +172,7 @@ python3 scripts/render_dot.py graphviz/file_graph.dot graphviz/tree.png
 
 - `Включить дамп в любой конфигурации (например: Release)`
 ```bash
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DRBTREE_DEBUG_DOT=ON -DSET_MODE_ENABLED=ON
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=third_party/conan_toolchain.cmake -DRBTREE_DEBUG_DOT=ON
 cmake --build build
 ```
 
@@ -184,14 +186,14 @@ cmake --build build
 
 1. Создайте тесты:
 ```bash
-cmake --build build 
+cmake --build build
 ```
 
 2. Запустите тестовый двоичный файл:
 ```bash
 cd build
 ctest --output-on-failure
-``` 
+```
 Вы увидите 3 теста:
 - `unit_all` — набор GoogleTest, проверяющих инварианты КЧ-дерева и корректность основных операций
 
@@ -212,7 +214,7 @@ build/tests/rbtree_unit_tests
 ![dump](/graphviz/tree_graph.png)
 
 
-<!-- Так же если вам интересно узнать кто же все-так быстрее 
+<!-- Так же если вам интересно узнать кто же все-так быстрее
 <details>
 
 ## Сравнение производительности

@@ -11,16 +11,14 @@ add_executable(rbtree_unit_tests
 target_include_directories(rbtree_unit_tests PRIVATE ${CMAKE_SOURCE_DIR}/include)
 target_link_libraries(rbtree_unit_tests
     PRIVATE
-        GTest::gtest_main   
-        pthread             
+        GTest::gtest_main
+        pthread
 )
 
 target_compile_definitions(rbtree_unit_tests PRIVATE
     TEST_DATA_DIR="${CMAKE_SOURCE_DIR}/tests"
     CUSTOM_MODE_DEBUG
 )
-
-target_compile_definitions(rbtree_unit_tests PRIVATE TEST_DATA_DIR="${CMAKE_SOURCE_DIR}/tests")
 
 add_test(NAME unit_all
   COMMAND $<TARGET_FILE:rbtree_unit_tests>

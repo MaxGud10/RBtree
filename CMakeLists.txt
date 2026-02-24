@@ -16,6 +16,10 @@ option(RBTREE_DEBUG_DOT "Dump Graphviz (CUSTOM_MODE_DEBUG)" OFF)
 message(STATUS "SET mode (rb_tree): ${SET_MODE_ENABLED}")
 message(STATUS "RBTREE_DEBUG_DOT: ${RBTREE_DEBUG_DOT}")
 
+if (EXISTS "${CMAKE_SOURCE_DIR}/third_party")
+    list(APPEND CMAKE_PREFIX_PATH "${CMAKE_SOURCE_DIR}/third_party")
+endif()
+
 find_package(cxxopts REQUIRED CONFIG)
 
 add_executable(rb_tree src/main.cpp)

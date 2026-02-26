@@ -47,8 +47,8 @@ q 10 20
 
 | Режим | Что собрать / какие флаги | Как запустить | Примечания |
 |---|---|---|---|
-| **Обычный** | `cmake -S . -B build -DSET_MODE_ENABLED=OFF` | `./build/rb_tree < tests/end2end/small_input.txt` | Только наше дерево, выводит ответы. |
-| **Проверка ответов** | `cmake -S . -B build -DSET_MODE_ENABLED=ON` | `./build/rb_tree < tests/end2end/small_input.txt` | Параллельно проверяет ответы через `std::set`, расхождения выводит в `stderr`. |
+| **Обычный** | `cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DSET_MODE_ENABLED=ON` | `./build/rb_tree < tests/end2end/small_input.txt` | Только наше дерево, выводит ответы. |
+| **Проверка ответов** | `cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DSET_MODE_ENABLED=ON` | `./build/rb_tree < tests/end2end/small_input.txt` | Параллельно проверяет ответы через `std::set`, расхождения выводит в `stderr`. |
 | **Бенчмарк** | (без флагов) | `./build/rb_tree_bench < tests/end2end/big_input.txt 1>/dev/null` | Отдельный бинарь для замеров. Усреднение по батчам, параметр `--bench-batch=N` (по умолчанию 2000). |
 | **Graphviz-дамп** | `cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug`<br>или `-DRBTREE_DEBUG_DOT=ON` | `./build/rb_tree --gv-file=graphviz/my_tree.dot < tests/end2end/small_input.txt` | Автоматически включён в Debug. Можно включить вручную флагом `RBTREE_DEBUG_DOT`. Поддерживает `--gv-file=<путь>` и `--gv-prefix=<префикс>` для задания имён файлов. |
 
@@ -89,14 +89,14 @@ conan install . -of third_party -s build_type=Release --build=missing
 
  - `Основной режимy`
 ```bash
-cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=./third_party/conan_toolchain.cmake
+cmake -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build
 ./build/rb_tree < tests/end2end/small_input.txt
 ```
 
 - `Режим проверки с std::set`
 ```bash
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=third_party/conan_toolchain.cmake -DSET_MODE_ENABLED=ON
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DSET_MODE_ENABLED=ON
 cmake --build build
 ./build/rb_tree < tests/end2end/small_input.txt
 
@@ -106,7 +106,7 @@ cmake --build build
 
 - `Режим замера времени`
 ```bash
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=third_party/conan_toolchain.cmake
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build
 ./build/rb_tree_bench < tests/end2end/big_input.txt 1>/dev/null
 # Дополнительно можно задать размер батча:
@@ -120,7 +120,7 @@ cmake --build build
 ```bash
 conan install . -of third_party -s build_type=Debug --build=missing
 
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_TOOLCHAIN_FILE=third_party/conan_toolchain.cmake
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug
 cmake --build build
 ./build/rb_tree --gv-file=graphviz/file_graph.dot < tests/end2end/small_input.txt
 ```
@@ -172,7 +172,7 @@ python3 scripts/render_dot.py graphviz/file_graph.dot graphviz/tree.png
 
 - `Включить дамп в любой конфигурации (например: Release)`
 ```bash
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=third_party/conan_toolchain.cmake -DRBTREE_DEBUG_DOT=ON
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DRBTREE_DEBUG_DOT=ON
 cmake --build build
 ```
 

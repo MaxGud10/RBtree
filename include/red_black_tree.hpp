@@ -40,10 +40,7 @@ struct Node
     Node(const KeyT &key, Color color = Color::red)
         : key_   {key},
           color  {color},
-          parent_{nullptr},
-          left_  {nullptr},
-          right_ {nullptr},
-          left_is_thread{1},
+          left_is_thread {1},
           right_is_thread{1} {}
 };
 } // namespace detail
@@ -53,7 +50,8 @@ class Red_black_tree
 {
     using NodeT  = detail::Node<KeyT>;
 
-    NodeT *header_ = nullptr;
+    NodeT header_storage_{};
+    NodeT *header_ = &header_storage_;
     NodeT *root_   = nullptr;
 
     NodeT *get_parent(NodeT *node) const
@@ -272,11 +270,25 @@ class Red_black_tree
         return node ? node : header_;
     }
 
+    void init_header_() noexcept
+    {
+        header_->color   = Color::black;
+        header_->parent_ = nullptr;
+        header_->left_   = header_;
+        header_->right_  = header_;
+
+        header_->left_is_thread  = 1;
+        header_->right_is_thread = 1;
+    }
+
+    void make_empty_() noexcept
+    {
+        root_ = nullptr;
+        init_header_();
+    }
+
     void destroy_subtree() noexcept
     {
-        if (!header_)
-            return;
-
         NodeT *cur = header_->left_;
         while (cur != header_)
         {
@@ -289,27 +301,19 @@ class Red_black_tree
         header_->parent_ = nullptr;
         header_->left_   = header_;
         header_->right_  = header_;
+
+        header_->left_is_thread  = 1;
+        header_->right_is_thread = 1;
     }
 
 
 public:
     using const_iterator = RB_const_iterator<KeyT>;
 
-    Red_black_tree()
+    Red_black_tree() noexcept
     {
-        header_          = new NodeT();
-        header_->color   = Color::black;
-
-        header_->parent_ = nullptr;
-        header_->left_   = header_;
-        header_->right_  = header_;
-
-        header_->left_is_thread  = 1;
-        header_->right_is_thread = 1;
-
-        root_           = nullptr;
+        init_header_();
     }
-
 
     Red_black_tree(KeyT key) : Red_black_tree()
     {
@@ -333,53 +337,57 @@ public:
     ~Red_black_tree()
     {
         destroy_subtree();
-
-        delete header_;
-        header_ = nullptr;
     }
-
 
     Red_black_tree(const Red_black_tree&)            = delete;
     Red_black_tree &operator=(const Red_black_tree&) = delete;
 
-    Red_black_tree(Red_black_tree&& other) noexcept
-        : header_(std::exchange(other.header_, nullptr)),
-          root_  (std::exchange(other.root_,   nullptr))
+    Red_black_tree(Red_black_tree &&other) noexcept
     {
-        other.header_          = new NodeT();
-        other.header_->color   = Color::black;
-        other.header_->parent_ = nullptr;
-        other.header_->left_   = other.header_;
-        other.header_->right_  = other.header_;
+        init_header_();
 
-        other.header_->left_is_thread  = 1;
-        other.header_->right_is_thread = 1;
+        if (!other.root_)
+            return;
 
-        other.root_            = nullptr;
+        root_ = other.root_;
+
+        header_->parent_ = root_;
+        header_->left_   = other.header_->left_;
+        header_->right_  = other.header_->right_;
+
+        root_->parent_   = header_;
+
+        header_->left_->left_          = header_;
+        header_->left_->left_is_thread = 1;
+
+        header_->right_->right_          = header_;
+        header_->right_->right_is_thread = 1;
+
+        other.make_empty_();
     }
 
-    Red_black_tree &operator=(Red_black_tree &&other) noexcept
+    Red_black_tree& operator=(Red_black_tree &&other) noexcept
     {
         if (this == &other)
             return *this;
 
         destroy_subtree();
-        delete header_;
 
-        header_ = std::exchange(other.header_, nullptr);
-        root_   = std::exchange(other.root_,   nullptr);
+        if (!other.root_)
+            return *this;
 
-        other.header_          = new NodeT();
-        other.header_->color   = Color::black;
-        other.header_->parent_ = nullptr;
-        other.header_->left_   = other.header_;
-        other.header_->right_  = other.header_;
+        root_ = other.root_;
 
-        other.header_->left_is_thread  = 1;
-        other.header_->right_is_thread = 1;
+        header_->parent_ = root_;
+        header_->left_   = other.header_->left_;
+        header_->right_  = other.header_->right_;
 
-        other.root_            = nullptr;
+        root_->parent_   = header_;
 
+        header_->left_->left_    = header_;
+        header_->right_->right_  = header_;
+
+        other.make_empty_();
         return *this;
     }
 

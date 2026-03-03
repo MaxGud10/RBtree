@@ -2,13 +2,18 @@
 #include <unordered_map>
 #include <optional>
 
+#include <atomic>
+#include <mutex>
+#include <unordered_set>
+#include <new>
+#include <vector>
+
 #include "red_black_tree.hpp"
 
 using Key = int64_t;
+using NodeT = Tree::detail::Node<Key>;
 
 #ifdef CUSTOM_MODE_DEBUG
-
-using NodeT = Tree::detail::Node<Key>;
 
 struct Info {
     Tree::Color color{};
@@ -43,6 +48,53 @@ static int CheckRBRec(const NodeT* n,
     return lh + (n->color == Tree::Color::black ? 1 : 0);
 }
 #endif
+
+
+struct ThrowingKey
+{
+    int64_t v = 0;
+
+    static inline int copies_left = 1'000'000;
+    static inline int compares_left = 1'000'000;
+
+    ThrowingKey() = default;
+    explicit ThrowingKey(int64_t x) : v(x) {}
+
+    ThrowingKey(const ThrowingKey& other) : v(other.v)
+    {
+        if (--copies_left == 0) throw std::runtime_error("copy fail");
+    }
+
+    ThrowingKey& operator=(const ThrowingKey& other)
+    {
+        if (this == &other) return *this;
+        if (--copies_left == 0) throw std::runtime_error("assign fail");
+        v = other.v;
+        return *this;
+    }
+
+    friend bool operator<(const ThrowingKey& a, const ThrowingKey& b)
+    {
+        if (--compares_left == 0) throw std::runtime_error("compare fail");
+        return a.v < b.v;
+    }
+
+    friend bool operator>(const ThrowingKey& a, const ThrowingKey& b)
+    {
+        if (--compares_left == 0) throw std::runtime_error("compare fail");
+        return a.v > b.v;
+    }
+};
+
+static std::vector<int64_t> DumpKeys(const Tree::Red_black_tree<ThrowingKey>& t)
+{
+    std::vector<int64_t> v;
+    for (auto it = t.begin(); it != t.end(); ++it)
+        v.push_back((*it).v);
+    return v;
+}
+
+
 
 TEST(RBTreeUnit, EmptyTreeRangeIsZero){
     Tree::Red_black_tree<Key> t;
@@ -100,4 +152,77 @@ TEST(RBTreeUnit, RBInvariantsAfterInsert)
 #else
     GTEST_SKIP() << "RB invariants check requires CUSTOM_MODE_DEBUG";
 #endif
+}
+
+
+TEST(RBTreeUnit, ExceptionSafety_InsertStrongGuarantee_OnKeyCopyThrow)
+{
+    Tree::Red_black_tree<ThrowingKey> t;
+    for (int64_t x : {10, 20, 30, 15, 25})
+        t.insert_elem(ThrowingKey{x});
+
+    auto before = DumpKeys(t);
+
+    ThrowingKey::copies_left   = 1;
+    ThrowingKey::compares_left = 1'000'000;
+
+    EXPECT_THROW(t.insert_elem(ThrowingKey{17}), std::runtime_error);
+
+    EXPECT_EQ(DumpKeys(t), before);
+}
+
+TEST(RBTreeUnit, ExceptionSafety_InsertStrongGuarantee_OnCompareThrow)
+{
+    Tree::Red_black_tree<ThrowingKey> t;
+    for (int64_t x : {10, 20, 30, 15, 25})
+        t.insert_elem(ThrowingKey{x});
+
+    auto before = DumpKeys(t);
+
+    ThrowingKey::copies_left = 1'000'000;
+    ThrowingKey::compares_left = 1;
+
+    EXPECT_THROW(t.insert_elem(ThrowingKey{17}), std::runtime_error);
+
+    EXPECT_EQ(DumpKeys(t), before);
+}
+
+TEST(RBTreeUnit, ExceptionSafety_CopyAssign_StrongGuarantee_OnKeyCopyThrow)
+{
+    Tree::Red_black_tree<ThrowingKey> a;
+    for (int64_t x : {1, 2, 3, 4, 5})
+        a.insert_elem(ThrowingKey{x});
+
+    Tree::Red_black_tree<ThrowingKey> b;
+    for (int64_t x : {10, 20, 30, 40, 50, 60})
+        b.insert_elem(ThrowingKey{x});
+
+    auto a_before = DumpKeys(a);
+
+    ThrowingKey::copies_left = 3;
+    ThrowingKey::compares_left = 1'000'000;
+
+    EXPECT_THROW(a = b, std::runtime_error);
+    EXPECT_EQ(DumpKeys(a), a_before) << "a must remain unchanged on failed assignment";
+}
+
+TEST(RBTreeUnit, ExceptionSafety_CopyCtor_OnKeyCopyThrow)
+{
+    Tree::Red_black_tree<ThrowingKey> src;
+    for (int64_t x : {10, 20, 30, 15, 25, 5, 1})
+        src.insert_elem(ThrowingKey{x});
+
+    ThrowingKey::copies_left   = 3;
+    ThrowingKey::compares_left = 1'000'000;
+
+    EXPECT_THROW((Tree::Red_black_tree<ThrowingKey>(src)), std::runtime_error);
+
+
+    ThrowingKey::copies_left   = 1'000'000;
+    ThrowingKey::compares_left = 1'000'000;
+
+    auto keys = DumpKeys(src);
+    EXPECT_EQ(keys.size(), 7u);
+    EXPECT_EQ(keys.front(), 1);
+    EXPECT_EQ(keys.back(), 30);
 }

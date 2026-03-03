@@ -255,6 +255,46 @@ class Red_black_tree
         return node;
     }
 
+    static NodeT *rightmost(NodeT *node)
+    {
+        if (!node)
+            return nullptr;
+        while (!node->right_is_thread)
+            node = node->right_;
+
+        return node;
+    }
+
+    void rebind_header_from_root_() noexcept
+    {
+        if (!root_)
+        {
+            init_header_();
+            return;
+        }
+
+        header_->parent_ = root_;
+        root_->parent_   = header_;
+
+        header_->left_   = leftmost(root_);
+        header_->right_  = rightmost(root_);
+
+        if (header_->left_ && header_->left_ != header_)
+        {
+            header_->left_->left_          = header_;
+            header_->left_->left_is_thread = 1;
+        }
+
+        if (header_->right_ && header_->right_ != header_)
+        {
+            header_->right_->right_          = header_;
+            header_->right_->right_is_thread = 1;
+        }
+
+        header_->left_is_thread  = 1;
+        header_->right_is_thread = 1;
+    }
+
     NodeT *inorder_successor(NodeT *node) const noexcept
     {
         if (!node)
@@ -339,8 +379,23 @@ public:
         destroy_subtree();
     }
 
-    Red_black_tree(const Red_black_tree&)            = delete;
-    Red_black_tree &operator=(const Red_black_tree&) = delete;
+    Red_black_tree(const Red_black_tree &other)
+    {
+        init_header_();
+        for (auto it = other.begin(); it != other.end(); ++it)
+            insert_elem(*it);
+    }
+
+    Red_black_tree &operator=(const Red_black_tree &other)
+    {
+        if (this == &other)
+            return *this;
+
+        Red_black_tree tmp(other);
+
+        this->swap(tmp);
+        return *this;
+    }
 
     Red_black_tree(Red_black_tree &&other) noexcept
     {
@@ -442,6 +497,15 @@ public:
         auto last  = upper_bound(key2);
 
         return std::distance(first, last);
+    }
+
+    void swap(Red_black_tree &other) noexcept
+    {
+        using std::swap;
+        swap(root_, other.root_);
+
+              rebind_header_from_root_();
+        other.rebind_header_from_root_();
     }
 
 

@@ -379,12 +379,29 @@ public:
         destroy_subtree();
     }
 
-    Red_black_tree(const Red_black_tree &other)
+    Red_black_tree(const Red_black_tree& other) : Red_black_tree()
     {
-        init_header_();
+        Red_black_tree tmp;         // tmp has been successfully created => it will be destroyed when it is excluded
         for (auto it = other.begin(); it != other.end(); ++it)
-            insert_elem(*it);
+            tmp.insert_elem(*it);   // building a copy in tmp
+
+        swap(tmp);
     }
+
+    // TODO: убрать
+    // Red_black_tree(const Red_black_tree& other) : Red_black_tree()
+    // {
+    //     try
+    //     {
+    //         for (auto it = other.begin(); it != other.end(); ++it)
+    //             insert_elem(*it);
+    //     }
+    //     catch (...)
+    //     {
+    //         destroy_subtree();
+    //         throw;
+    //     }
+    // }
 
     Red_black_tree &operator=(const Red_black_tree &other)
     {
@@ -393,7 +410,7 @@ public:
 
         Red_black_tree tmp(other);
 
-        this->swap(tmp);
+        swap(tmp);
         return *this;
     }
 

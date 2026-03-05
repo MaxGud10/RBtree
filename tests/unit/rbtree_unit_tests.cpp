@@ -10,7 +10,7 @@
 
 #include "red_black_tree.hpp"
 
-using Key = int64_t;
+using Key   = int64_t;
 using NodeT = Tree::detail::Node<Key>;
 
 #ifdef CUSTOM_MODE_DEBUG
